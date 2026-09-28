@@ -15,4 +15,8 @@ class HomeNavigationProvider with ChangeNotifier {
     _current = tab;
     notifyListeners();
   }
+
+  /// Revient à l'accueil sans notifier : appelé à l'ouverture de HomeScreen
+  /// (après connexion/déconnexion), avant son premier build.
+  void reset() => _current = HomeTab.home;
 }

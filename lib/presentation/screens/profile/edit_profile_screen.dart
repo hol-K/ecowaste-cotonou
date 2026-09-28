@@ -51,10 +51,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         district: _selectedDistrict,
       );
 
-      await authProvider.updateProfile(updatedProfile);
+      final success = await authProvider.updateProfile(updatedProfile);
 
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profil mis à jour avec succès'),
@@ -62,7 +64,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
         );
         Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Échec de la mise à jour'),
+            backgroundColor: const Color(0xFFEF5350),
+          ),
+        );
       }
+    } else {
+      setState(() => _isLoading = false);
     }
   }
 

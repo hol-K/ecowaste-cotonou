@@ -62,13 +62,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Navigation vers Home
-      Navigator.of(context).pushReplacement(
+      // Navigation vers Home (pile vidée : retour ≠ revenir à l'inscription)
+      final messenger = ScaffoldMessenger.of(context);
+      Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (context) => const HomeScreen()),
+        (route) => false,
       );
 
       // Message de succès
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
           content: Text('Compte créé avec succès ! 🎉'),
           backgroundColor: Color(0xFF66BB6A),
@@ -96,7 +98,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => Navigator.maybePop(context),
         ),
       ),
       body: SafeArea(
@@ -475,11 +477,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       style: TextStyle(color: Color(0xFFB8C5C0), fontSize: 14),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                      ),
+                      onTap: () {
+                        // Arrivé depuis le login : on y retourne simplement
+                        final navigator = Navigator.of(context);
+                        if (navigator.canPop()) {
+                          navigator.pop();
+                        } else {
+                          navigator.pushReplacement(
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                          );
+                        }
+                      },
                       child: const Text(
                         'Se connecter',
                         style: TextStyle(

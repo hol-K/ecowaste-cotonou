@@ -5,8 +5,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../home/home_screen.dart';
 import '../auth/login_screen.dart';
-import '../../../data/services/auth_service.dart';
-import 'package:ecowaste_cotonou/data/repositories/user_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 /// Écran de démarrage (Splash Screen)
 /// Affiché pendant 3 secondes au lancement de l'app
@@ -59,12 +57,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     if (!mounted) return;
     
-    // Vérifier si l'utilisateur est connecté
-    final authService = AuthService(
-    FirebaseAuth.instance, 
-    UserRepository(), // Assurez-vous d'importer UserRepository
-);
-    final isAuthenticated = authService.isAuthenticated;
+    // Vérifier si l'utilisateur est connecté (session restaurée par Firebase)
+    final isAuthenticated = FirebaseAuth.instance.currentUser != null;
     
     Widget nextScreen;
     

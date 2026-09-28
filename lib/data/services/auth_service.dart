@@ -110,11 +110,19 @@ class AuthService {
       final user = currentUser;
       if (user == null) throw Exception('Aucun utilisateur connecté');
 
-      // Supprimer le profil Firestore
+      // Le profil doit être supprimé tant que l'utilisateur est encore
+      // authentifié (règles Firestore). Si la suppression Auth échoue
+      // (ex: requires-recent-login), on restaure le profil pour ne pas
+      // laisser un compte sans profil.
+      final profile = await _userRepository.getUserProfile(user.uid);
       await _userRepository.deleteUserProfile(user.uid);
 
-      // Supprimer le compte Firebase Auth
-      await user.delete();
+      try {
+        await user.delete();
+      } catch (_) {
+        if (profile != null) await _userRepository.createUserProfile(profile);
+        rethrow;
+      }
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
     } catch (e) {
@@ -160,6 +168,10 @@ class AuthService {
         return 'Aucun compte trouvé avec cet email.';
       case 'wrong-password':
         return 'Mot de passe incorrect.';
+      case 'invalid-credential':
+        return 'Email ou mot de passe incorrect.';
+      case 'network-request-failed':
+        return 'Pas de connexion internet. Vérifiez votre réseau.';
       case 'too-many-requests':
         return 'Trop de tentatives. Réessayez plus tard.';
       case 'operation-not-allowed':

@@ -26,6 +26,14 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  /// Ouvre l'accueil en vidant la pile (retour ≠ revenir au login)
+  void _goHome() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (context) => const HomeScreen()),
+      (route) => false,
+    );
+  }
+
   /// Connexion
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -40,10 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Navigation vers Home
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      _goHome();
     } else {
       // Afficher l'erreur
       ScaffoldMessenger.of(context).showSnackBar(
@@ -349,11 +354,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Continuer sans compte
                 TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const HomeScreen()),
-                    );
-                  },
+                  onPressed: _goHome,
                   child: const Text(
                     'Continuer sans compte',
                     style: TextStyle(

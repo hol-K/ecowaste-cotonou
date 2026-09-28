@@ -1,12 +1,20 @@
 // lib/presentation/screens/home/home_screen.dart
 
-import 'package:ecowaste_cotonou/presentation/screens/profile/profile_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../../data/models/collection_schedule.dart';
+import '../../../data/models/user_statistics.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/home_navigation_provider.dart';
+import '../../providers/schedule_provider.dart';
+import '../../widgets/waste_visuals.dart';
 import '../calendar/calendar_screen.dart';
 import '../guide/guide_screen.dart';
 import '../map/map_screen.dart';
+import '../profile/profile_screen.dart';
 
-/// Écran d'accueil principal (Home Screen / Dashboard)
+/// Écran principal : barre de navigation + onglets conservés en mémoire
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -15,30 +23,35 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
-
-  final List<Widget> _screens = [
-    const HomePage(),
-    const CalendarScreen(),
-    const GuideScreen(),
-    const MapScreen(),
-    const ProfileScreen(),
+  // IndexedStack : chaque onglet garde son état (scroll, carte, recherche…)
+  static const List<Widget> _screens = [
+    HomePage(),
+    CalendarScreen(),
+    GuideScreen(),
+    MapScreen(),
+    ProfileScreen(),
   ];
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
+  @override
+  void initState() {
+    super.initState();
+    context.read<HomeNavigationProvider>().reset();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ScheduleProvider>().ensureLoaded();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final navigation = context.watch<HomeNavigationProvider>();
+    final index = navigation.current.index;
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A3329),
-      body: _screens[_selectedIndex],
+      body: IndexedStack(index: index, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
+        currentIndex: index,
+        onTap: (i) => navigation.goTo(HomeTab.values[i]),
         type: BottomNavigationBarType.fixed,
         backgroundColor: const Color(0xFF1E4538),
         selectedItemColor: const Color(0xFF4A9B7F),
@@ -79,58 +92,50 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final profile = context.watch<AuthProvider>().userProfile;
+    final schedules = context.watch<ScheduleProvider>();
+    final navigation = context.read<HomeNavigationProvider>();
+
     return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
+      child: RefreshIndicator(
+        onRefresh: schedules.refresh,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header avec salutation
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Bonjour 👋',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          profile?.getWelcomeMessage() ?? 'Bonjour 👋',
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        _getCurrentDate(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Color(0xFFB8C5C0),
+                        const SizedBox(height: 4),
+                        Text(
+                          _formatToday(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Color(0xFFB8C5C0),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  // Icônes notifications et profil
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_outlined),
-                        color: Colors.white,
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.person_outline),
-                        color: Colors.white,
-                        onPressed: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (context) => const ProfileScreen(),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
+                  IconButton(
+                    icon: const Icon(Icons.person_outline),
+                    color: Colors.white,
+                    tooltip: 'Mon profil',
+                    onPressed: () => navigation.goTo(HomeTab.profile),
                   ),
                 ],
               ),
@@ -138,11 +143,13 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 24),
 
               // Card principale : Prochaine collecte
-              _buildNextCollectionCard(),
+              GestureDetector(
+                onTap: () => navigation.goTo(HomeTab.calendar),
+                child: _buildNextCollectionCard(schedules),
+              ),
 
               const SizedBox(height: 24),
 
-              // Section Actions rapides
               const Text(
                 'Actions rapides',
                 style: TextStyle(
@@ -154,13 +161,12 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              _buildQuickActionsGrid(),
+              _buildQuickActionsGrid(navigation),
 
               const SizedBox(height: 24),
 
-              // Section Statistiques
               const Text(
-                'Votre impact ce mois',
+                'Votre impact',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -170,7 +176,7 @@ class HomePage extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              _buildStatisticsCard(),
+              _buildStatisticsCard(profile?.statistics),
             ],
           ),
         ),
@@ -179,7 +185,10 @@ class HomePage extends StatelessWidget {
   }
 
   /// Card de la prochaine collecte
-  Widget _buildNextCollectionCard() {
+  Widget _buildNextCollectionCard(ScheduleProvider schedules) {
+    final CollectionSchedule? next = schedules.nextSchedule;
+    final color = next?.wasteType.uiColor ?? const Color(0xFF4A9B7F);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -190,7 +199,7 @@ class HomePage extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF4A9B7F), width: 2),
+        border: Border.all(color: color, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,28 +209,34 @@ class HomePage extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A9B7F).withOpacity(0.2),
+                  color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.delete_outline_rounded,
-                  color: Color(0xFF4A9B7F),
+                child: Icon(
+                  next?.wasteType.icon ?? Icons.event_busy,
+                  color: color,
                   size: 32,
                 ),
               ),
               const SizedBox(width: 16),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Prochaine collecte',
-                      style: TextStyle(fontSize: 14, color: Color(0xFFB8C5C0)),
+                      'Prochaine collecte · ${schedules.currentDistrict}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Color(0xFFB8C5C0),
+                      ),
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Text(
-                      'Ordures ménagères',
-                      style: TextStyle(
+                      next?.wasteType.displayName ??
+                          (schedules.isLoading
+                              ? 'Chargement…'
+                              : 'Aucune collecte programmée'),
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -232,57 +247,64 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(color: Color(0xFF4A9B7F), thickness: 1),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Jeudi 23 janvier',
+          if (next != null) ...[
+            const SizedBox(height: 16),
+            Divider(color: color, thickness: 1),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        next.getFormattedDate(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        next.collectionTime,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFB8C5C0),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    next.getCountdownText(),
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      color: color,
                     ),
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    '06:00 - 10:00',
-                    style: TextStyle(fontSize: 14, color: Color(0xFFB8C5C0)),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
                 ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4A9B7F).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Dans 2 jours',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF4A9B7F),
-                  ),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 
   /// Grid des actions rapides
-  Widget _buildQuickActionsGrid() {
+  Widget _buildQuickActionsGrid(HomeNavigationProvider navigation) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -295,22 +317,25 @@ class HomePage extends StatelessWidget {
           icon: Icons.calendar_today_rounded,
           title: 'Calendrier',
           color: const Color(0xFF42A5F5),
-          
+          onTap: () => navigation.goTo(HomeTab.calendar),
         ),
         _buildQuickActionCard(
           icon: Icons.book_rounded,
           title: 'Guide de Tri',
           color: const Color(0xFF66BB6A),
+          onTap: () => navigation.goTo(HomeTab.guide),
         ),
         _buildQuickActionCard(
           icon: Icons.map_rounded,
           title: 'Points de collecte',
           color: const Color(0xFFFFA726),
+          onTap: () => navigation.goTo(HomeTab.map),
         ),
         _buildQuickActionCard(
-          icon: Icons.lightbulb_outline_rounded,
-          title: 'Conseils',
+          icon: Icons.emoji_events_outlined,
+          title: 'Mon impact',
           color: const Color(0xFFAB47BC),
+          onTap: () => navigation.goTo(HomeTab.profile),
         ),
       ],
     );
@@ -321,42 +346,52 @@ class HomePage extends StatelessWidget {
     required IconData icon,
     required String title,
     required Color color,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0x14FFFFFF),
+    return Material(
+      color: const Color(0x14FFFFFF),
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 32, color: color),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
           ),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 32, color: color),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  /// Card des statistiques
-  Widget _buildStatisticsCard() {
+  /// Card des statistiques (profil connecté, sinon tirets)
+  Widget _buildStatisticsCard(UserStatistics? stats) {
+    final kg = NumberFormat('0.0', 'fr_FR');
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -368,11 +403,20 @@ class HomePage extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('12', 'jours 🔥'),
+          _buildStatItem(
+            stats != null ? '${stats.consecutiveDays}' : '—',
+            'jours 🔥',
+          ),
           Container(width: 1, height: 40, color: const Color(0xFF4A9B7F)),
-          _buildStatItem('8,5 kg', 'recyclés'),
+          _buildStatItem(
+            stats != null ? '${kg.format(stats.totalWasteRecycled)} kg' : '—',
+            'recyclés',
+          ),
           Container(width: 1, height: 40, color: const Color(0xFF4A9B7F)),
-          _buildStatItem('2,3 kg', 'CO₂ évités'),
+          _buildStatItem(
+            stats != null ? '${kg.format(stats.co2Avoided)} kg' : '—',
+            'CO₂ évités',
+          ),
         ],
       ),
     );
@@ -400,38 +444,9 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  /// Obtient la date actuelle formatée
-  String _getCurrentDate() {
-    final now = DateTime.now();
-    final days = [
-      'Lundi',
-      'Mardi',
-      'Mercredi',
-      'Jeudi',
-      'Vendredi',
-      'Samedi',
-      'Dimanche',
-    ];
-    final months = [
-      'janvier',
-      'février',
-      'mars',
-      'avril',
-      'mai',
-      'juin',
-      'juillet',
-      'août',
-      'septembre',
-      'octobre',
-      'novembre',
-      'décembre',
-    ];
-
-    final dayName = days[now.weekday - 1];
-    final day = now.day;
-    final month = months[now.month - 1];
-    final year = now.year;
-
-    return '$dayName $day $month $year';
+  /// Date du jour en français, ex : « Lundi 28 septembre 2026 »
+  String _formatToday() {
+    final text = DateFormat('EEEE d MMMM y', 'fr_FR').format(DateTime.now());
+    return text[0].toUpperCase() + text.substring(1);
   }
 }

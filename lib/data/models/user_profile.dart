@@ -166,6 +166,8 @@ class UserProfile {
 
   /// Conversion depuis Map (Firestore → Dart)
   factory UserProfile.fromMap(Map<String, dynamic> map, String id) {
+    final createdAt =
+        (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
     return UserProfile(
       id: id,
       name: map['name'],
@@ -173,10 +175,8 @@ class UserProfile {
       phone: map['phone'],
       photoUrl: map['photoUrl'],
       district: map['district'] ?? 'Akpakpa',
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: map['updatedAt'] != null
-          ? (map['updatedAt'] as Timestamp).toDate()
-          : (map['createdAt'] as Timestamp).toDate(),
+      createdAt: createdAt,
+      updatedAt: (map['updatedAt'] as Timestamp?)?.toDate() ?? createdAt,
       statistics: UserStatistics.fromMap(map['statistics'] ?? {}),
       notificationSettings: NotificationSettings.fromMap(
         map['notificationSettings'] ?? {}

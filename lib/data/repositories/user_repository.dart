@@ -36,60 +36,39 @@ class UserRepository {
     });
   }
 
+  // Les écritures laissent remonter les exceptions : c'est à l'appelant
+  // d'afficher l'échec (auparavant elles renvoyaient `false`, jamais vérifié).
+
   // ========== CRÉATION (CREATE) ==========
 
   /// Crée un nouveau profil utilisateur
-  Future<bool> createUserProfile(UserProfile profile) async {
-    try {
-      await _firestore
-          .collection(_collection)
-          .doc(profile.id)
-          .set(profile.toMap());
-      return true;
-    } catch (e) {
-      print('Erreur lors de la création du profil: $e');
-      return false;
-    }
+  Future<void> createUserProfile(UserProfile profile) {
+    return _firestore
+        .collection(_collection)
+        .doc(profile.id)
+        .set(profile.toMap());
   }
 
   // ========== MISE À JOUR (UPDATE) ==========
 
   /// Met à jour le profil utilisateur complet
-  Future<bool> updateUserProfile(UserProfile profile) async {
-    try {
-      await _firestore
-          .collection(_collection)
-          .doc(profile.id)
-          .update(profile.toMap());
-      return true;
-    } catch (e) {
-      print('Erreur lors de la mise à jour du profil: $e');
-      return false;
-    }
+  Future<void> updateUserProfile(UserProfile profile) {
+    return _firestore
+        .collection(_collection)
+        .doc(profile.id)
+        .update(profile.toMap());
   }
 
   /// Met à jour des champs spécifiques
-  Future<bool> updateFields(String userId, Map<String, dynamic> fields) async {
-    try {
-      await _firestore.collection(_collection).doc(userId).update(fields);
-      return true;
-    } catch (e) {
-      print('Erreur lors de la mise à jour des champs: $e');
-      return false;
-    }
+  Future<void> updateFields(String userId, Map<String, dynamic> fields) {
+    return _firestore.collection(_collection).doc(userId).update(fields);
   }
 
   // ========== SUPPRESSION (DELETE) ==========
 
   /// Supprime un profil utilisateur
-  Future<bool> deleteUserProfile(String userId) async {
-    try {
-      await _firestore.collection(_collection).doc(userId).delete();
-      return true;
-    } catch (e) {
-      print('Erreur lors de la suppression du profil: $e');
-      return false;
-    }
+  Future<void> deleteUserProfile(String userId) {
+    return _firestore.collection(_collection).doc(userId).delete();
   }
 
   // ========== MÉTHODES UTILITAIRES ==========

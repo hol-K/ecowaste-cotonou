@@ -1,6 +1,7 @@
-import 'package:ecowaste_cotonou/presentation/screens/auth/signup_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../auth/login_screen.dart';
+import '../auth/signup_screen.dart';
 
 /// Écran d'introduction (Onboarding)
 /// 3 slides pour expliquer les fonctionnalités principales
@@ -53,14 +54,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _completeOnboarding();
   }
 
-  /// Marque l'onboarding comme vu et navigue vers Home
+  /// Marque l'onboarding comme vu et ouvre l'inscription.
+  /// Le login est placé dessous pour que le bouton retour y mène
+  /// (auparavant la pile était vide : retour = écran noir).
   Future<void> _completeOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
-    
+
     if (!mounted) return;
-    
-    Navigator.of(context).pushReplacement(
+
+    final navigator = Navigator.of(context);
+    navigator.pushReplacement(
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    );
+    navigator.push(
       MaterialPageRoute(builder: (context) => const SignUpScreen()),
     );
   }

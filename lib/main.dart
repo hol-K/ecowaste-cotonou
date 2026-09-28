@@ -11,7 +11,6 @@ import 'presentation/providers/guide_provider.dart';
 import 'presentation/providers/home_navigation_provider.dart';
 import 'presentation/providers/map_provider.dart';
 import 'presentation/providers/schedule_provider.dart';
-import 'presentation/providers/user_provider.dart';
 import 'presentation/screens/splash/splash_screen.dart';
 
 void main() async {
@@ -30,10 +29,14 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => HomeNavigationProvider()),
-        ChangeNotifierProvider(create: (_) => ScheduleProvider()),
+        // Le calendrier suit le quartier du profil connecté
+        ChangeNotifierProxyProvider<AuthProvider, ScheduleProvider>(
+          create: (_) => ScheduleProvider(),
+          update: (_, auth, schedule) =>
+              schedule!..syncDistrict(auth.userProfile?.district),
+        ),
         ChangeNotifierProvider(create: (_) => GuideProvider()),
         ChangeNotifierProvider(create: (_) => MapProvider()),
-        ChangeNotifierProvider(create: (_) => UserProvider()),
       ],
       child: const MyApp(),
     ),
