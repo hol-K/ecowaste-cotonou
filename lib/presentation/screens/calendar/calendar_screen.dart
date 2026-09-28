@@ -1,9 +1,9 @@
-import 'package:ecowaste_cotonou/data/models/event_detail_sheet.dart';
-import 'package:ecowaste_cotonou/data/models/calendar_event.dart';
-import 'package:ecowaste_cotonou/presentation/providers/calendar_provider.dart';
-import 'package:ecowaste_cotonou/presentation/widgets/calendar_widgets/calendar_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../data/models/collection_schedule.dart';
+import '../../providers/schedule_provider.dart';
+import '../../widgets/calendar_widgets/calendar_widget.dart';
+import '../../widgets/waste_visuals.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -18,77 +18,54 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.initState();
     // Charger les données au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CalendarProvider>().initialize();
+      context.read<ScheduleProvider>().ensureLoaded();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF1A3329),
       appBar: AppBar(
-        title: const Text('Calendrier de Collecte'),
+        title: Consumer<ScheduleProvider>(
+          builder: (context, provider, _) =>
+              Text('Collectes · ${provider.currentDistrict}'),
+        ),
+        backgroundColor: const Color(0xFF2D5F4F),
         actions: [
-          // Bouton rafraîchir
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<CalendarProvider>().refresh();
-            },
+            onPressed: () => context.read<ScheduleProvider>().refresh(),
           ),
         ],
       ),
-      body: Consumer<CalendarProvider>(
+      body: Consumer<ScheduleProvider>(
         builder: (context, provider, child) {
-          // Gestion de l'état de chargement
-          if (provider.isLoading && provider.events.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          // Gestion des erreurs
-          if (provider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Erreur: ${provider.error}'),
-                  ElevatedButton(
-                    onPressed: () => provider.refresh(),
-                    child: const Text('Réessayer'),
-                  ),
-                ],
-              ),
-            );
+          if (provider.errorMessage != null) {
+            return _buildError(provider);
           }
 
           return Column(
             children: [
-              // Calendrier
               CustomCalendarWidget(
-                focusedDay: provider.focusedDay,
+                focusedDay: provider.selectedDay,
                 selectedDay: provider.selectedDay,
-                events: provider.events,
+                eventLoader: provider.getSchedulesForDate,
                 onDaySelected: (selectedDay, focusedDay) {
                   provider.selectDay(selectedDay);
-                  
-                  // Afficher les événements du jour
-                  final dayEvents = provider.getEventsForDay(selectedDay);
-                  if (dayEvents.isNotEmpty) {
-                    _showDayEventsSheet(context, selectedDay, dayEvents);
-                  }
                 },
                 onPageChanged: (focusedDay) {
-                  provider.setFocusedDay(focusedDay);
+                  provider.selectDay(focusedDay);
+                  provider.setMonth(focusedDay);
                 },
               ),
+
+              if (provider.isLoading) const LinearProgressIndicator(minHeight: 2),
 
               const Divider(height: 1),
 
-              // Liste des événements du jour sélectionné
-              Expanded(
-                child: _buildEventsList(provider),
-              ),
+              // Collectes du jour sélectionné
+              Expanded(child: _buildEventsList(provider)),
             ],
           );
         },
@@ -96,58 +73,99 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  /// Construction de la liste des événements
-  Widget _buildEventsList(CalendarProvider provider) {
-    final events = provider.getEventsForDay(provider.selectedDay);
+  Widget _buildError(ScheduleProvider provider) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Color(0xFFEF5350)),
+            const SizedBox(height: 16),
+            Text(
+              provider.errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFFB8C5C0)),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: provider.refresh,
+              child: const Text('Réessayer'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    if (events.isEmpty) {
+  /// Liste des collectes du jour sélectionné
+  Widget _buildEventsList(ScheduleProvider provider) {
+    final schedules = provider.getSchedulesForDate(provider.selectedDay);
+
+    if (schedules.isEmpty) {
       return const Center(
         child: Text(
           'Aucune collecte prévue ce jour',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(color: Color(0xFFB8C5C0)),
         ),
       );
     }
 
     return ListView.builder(
-      itemCount: events.length,
+      itemCount: schedules.length,
       padding: const EdgeInsets.all(16),
-      itemBuilder: (context, index) {
-        final event = events[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: _parseColor(event.getColor()),
-              child: const Icon(Icons.delete_outline, color: Colors.white),
-            ),
-            title: Text(event.title),
-            subtitle: event.description != null 
-                ? Text(event.description!) 
-                : null,
-            trailing: Text(
-              '${event.date.hour}:${event.date.minute.toString().padLeft(2, '0')}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+      itemBuilder: (context, index) => _buildScheduleCard(schedules[index]),
+    );
+  }
+
+  Widget _buildScheduleCard(CollectionSchedule schedule) {
+    final color = schedule.wasteType.uiColor;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.6), width: 1.5),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            backgroundColor: color,
+            child: Icon(schedule.wasteType.icon, color: Colors.white),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  schedule.wasteType.displayName,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  schedule.collectionTime,
+                  style: TextStyle(color: color, fontWeight: FontWeight.w600),
+                ),
+                if (schedule.instructions.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    schedule.instructions,
+                    style: const TextStyle(color: Color(0xFFB8C5C0), height: 1.4),
+                  ),
+                ],
+              ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  /// Afficher le bottom sheet avec les événements du jour
-  void _showDayEventsSheet(BuildContext context, DateTime day, List <CalendarEvent> events) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => EventDetailSheet(
-        day: day,
-        events: events,
+        ],
       ),
     );
-  }
-
-  Color _parseColor(String hexColor) {
-    hexColor = hexColor.replaceAll('#', '');
-    return Color(int.parse('FF$hexColor', radix: 16));
   }
 }

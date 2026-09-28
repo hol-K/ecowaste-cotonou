@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/guide_provider.dart';
+import '../../widgets/waste_visuals.dart';
+import '../../../data/models/recycling_guide_item.dart';
 import '../../../data/models/waste_type.dart';
-import 'package:ecowaste_cotonou/presentation/screens/guide/guide_detail_screen.dart';
+import 'guide_detail_screen.dart';
 
 /// Écran du guide de recyclage connecté à Firebase
 class GuideScreen extends StatefulWidget {
@@ -40,8 +43,8 @@ class _GuideScreenState extends State<GuideScreen> {
         backgroundColor: const Color(0xFF2D5F4F),
         elevation: 0,
         actions: [
-          // Bouton pour initialiser les données (en développement)
-          if (context.watch<GuideProvider>().totalItemsCount == 0)
+          // Bouton pour initialiser les données (debug uniquement : écrit dans Firestore)
+          if (kDebugMode && context.watch<GuideProvider>().totalItemsCount == 0)
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
               onPressed: () async {
@@ -196,50 +199,9 @@ class _GuideScreenState extends State<GuideScreen> {
   }
 
   /// Card d'un item du guide
-  // ignore: strict_top_level_inference
-  Widget _buildItemCard(item) {
-    // Obtenir la couleur selon le type de déchet
-    Color getColor() {
-      switch (item.actualWasteType) {
-        case WasteType.recyclable:
-          return const Color(0xFF42A5F5);
-        case WasteType.glass:
-          return const Color(0xFFFFA726);
-        case WasteType.organic:
-          return const Color(0xFF66BB6A);
-        case WasteType.dangerous:
-          return const Color(0xFFEF5350);
-        case WasteType.electronic:
-          return const Color(0xFFAB47BC);
-        default:
-          return const Color(0xFF4A9B7F);
-      }
-    }
-
-    // Obtenir l'icône selon la catégorie
-    IconData getIcon() {
-      switch (item.category) {
-        case RecyclingCategory.plastic:
-          return Icons.local_drink;
-        case RecyclingCategory.paper:
-          return Icons.article;
-        case RecyclingCategory.glass:
-          return Icons.wine_bar;
-        case RecyclingCategory.metal:
-          return Icons.construction;
-        case RecyclingCategory.organic:
-          return Icons.eco;
-        case RecyclingCategory.dangerous:
-          return Icons.warning_amber_rounded;
-        case RecyclingCategory.electronic:
-          return Icons.phone_android;
-        default:
-          return Icons.recycling;
-      }
-    }
-
-    final color = getColor();
-    final icon = getIcon();
+  Widget _buildItemCard(RecyclingGuideItem item) {
+    final color = item.wasteType.uiColor;
+    final icon = item.category.icon;
 
     return GestureDetector(
       onTap: () {
@@ -316,7 +278,7 @@ class _GuideScreenState extends State<GuideScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              item.wasteType,
+                              item.wasteType.displayName,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: color,
@@ -430,7 +392,7 @@ class _GuideScreenState extends State<GuideScreen> {
             style: TextStyle(fontSize: 14, color: Color(0xFFB8C5C0)),
           ),
           const SizedBox(height: 24),
-          if (context.watch<GuideProvider>().totalItemsCount == 0)
+          if (kDebugMode && context.watch<GuideProvider>().totalItemsCount == 0)
             ElevatedButton.icon(
               onPressed: () async {
                 final provider = context.read<GuideProvider>();

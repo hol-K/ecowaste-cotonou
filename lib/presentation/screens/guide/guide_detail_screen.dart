@@ -1,19 +1,26 @@
-import 'package:ecowaste_cotonou/data/models/guide_item.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../../data/models/recycling_guide_item.dart';
+import '../../../data/models/waste_type.dart';
+import '../../providers/home_navigation_provider.dart';
+import '../../providers/map_provider.dart';
+import '../../widgets/waste_visuals.dart';
 
 /// Écran de détail d'un item du guide de recyclage
 class GuideDetailScreen extends StatelessWidget {
-  final GuideItem item;
+  final RecyclingGuideItem item;
 
   const GuideDetailScreen({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final color = item.wasteType.uiColor;
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A3329),
       body: CustomScrollView(
         slivers: [
-          // AppBar avec image
+          // AppBar avec icône
           SliverAppBar(
             expandedHeight: 250,
             pinned: true,
@@ -25,27 +32,19 @@ class GuideDetailScreen extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      item.color.withOpacity(0.3),
+                      color.withValues(alpha: 0.3),
                       const Color(0xFF2D5F4F),
                     ],
                   ),
                 ),
                 child: Center(
                   child: Hero(
-                    tag: 'guide_${item.name}',
-                    child: Icon(item.icon, size: 120, color: item.color),
+                    tag: 'guide_${item.id}',
+                    child: Icon(item.category.icon, size: 120, color: color),
                   ),
                 ),
               ),
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.share),
-                onPressed: () {
-                  // TODO: Partager
-                },
-              ),
-            ],
           ),
 
           // Contenu
@@ -74,18 +73,30 @@ class GuideDetailScreen extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: item.color.withOpacity(0.2),
+                      color: color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      item.category,
+                      item.category.displayName,
                       style: TextStyle(
                         fontSize: 14,
-                        color: item.color,
+                        color: color,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
+
+                  if (item.description.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      item.description,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFFB8C5C0),
+                        height: 1.5,
+                      ),
+                    ),
+                  ],
 
                   const SizedBox(height: 32),
 
@@ -96,20 +107,20 @@ class GuideDetailScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: item.color.withOpacity(0.2),
+                        color: color.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: item.color, width: 2),
+                        border: Border.all(color: color, width: 2),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.delete, color: item.color, size: 32),
+                          Icon(item.wasteType.icon, color: color, size: 32),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'À jeter dans la poubelle ${item.wasteType.toUpperCase()}',
+                                  'Poubelle : ${item.wasteType.displayName}',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
@@ -118,11 +129,8 @@ class GuideDetailScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  item.wasteType,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: item.color,
-                                  ),
+                                  item.wasteType.description,
+                                  style: TextStyle(fontSize: 14, color: color),
                                 ),
                               ],
                             ),
@@ -132,76 +140,76 @@ class GuideDetailScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  if (item.instructions.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      icon: Icons.list_alt,
+                      title: 'Comment préparer ?',
+                      child: _buildInstructionsList(),
+                    ),
+                  ],
 
-                  // Section Instructions
-                  _buildSection(
-                    icon: Icons.list_alt,
-                    title: 'Comment préparer ?',
-                    child: _buildInstructionsList(),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Section Impact environnemental
-                  _buildSection(
-                    icon: Icons.eco,
-                    title: 'Impact positif',
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF66BB6A).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(
-                            Icons.energy_savings_leaf,
-                            color: Color(0xFF66BB6A),
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _getEnvironmentalImpact(),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                                height: 1.5,
+                  if (item.environmentalImpact.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      icon: Icons.eco,
+                      title: 'Impact positif',
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF66BB6A).withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(
+                              Icons.energy_savings_leaf,
+                              color: Color(0xFF66BB6A),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                item.environmentalImpact,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                  height: 1.5,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
+                  ],
 
                   // Section Alternatives
-                  if (_hasAlternatives()) ...[
+                  if (item.hasAlternatives) ...[
+                    const SizedBox(height: 24),
                     _buildSection(
                       icon: Icons.lightbulb_outline,
                       title: 'Alternatives écologiques',
                       child: _buildAlternativesList(),
                     ),
-                    const SizedBox(height: 24),
                   ],
 
-                  // Bouton d'action
+                  const SizedBox(height: 24),
+
+                  // Bouton d'action : ouvre la carte filtrée sur ce type
                   SizedBox(
                     width: double.infinity,
                     height: 54,
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: Naviguer vers la carte
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Ouverture de la carte...'),
-                            duration: Duration(seconds: 2),
-                          ),
+                        context.read<MapProvider>().filterByWasteType(
+                          item.wasteType,
                         );
+                        context.read<HomeNavigationProvider>().goTo(
+                          HomeTab.map,
+                        );
+                        Navigator.of(context).popUntil((route) => route.isFirst);
                       },
                       icon: const Icon(Icons.map),
                       label: const Text('Trouver un point de collecte'),
@@ -253,13 +261,8 @@ class GuideDetailScreen extends StatelessWidget {
 
   /// Liste des instructions
   Widget _buildInstructionsList() {
-    final instructions = _getInstructions();
-
     return Column(
-      children: instructions.asMap().entries.map((entry) {
-        final index = entry.key;
-        final instruction = entry.value;
-
+      children: item.instructions.asMap().entries.map((entry) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: Row(
@@ -268,13 +271,13 @@ class GuideDetailScreen extends StatelessWidget {
               Container(
                 width: 28,
                 height: 28,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4A9B7F),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF4A9B7F),
                   shape: BoxShape.circle,
                 ),
                 child: Center(
                   child: Text(
-                    '${index + 1}',
+                    '${entry.key + 1}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -286,7 +289,7 @@ class GuideDetailScreen extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  instruction,
+                  entry.value,
                   style: const TextStyle(
                     fontSize: 14,
                     color: Color(0xFFB8C5C0),
@@ -303,10 +306,8 @@ class GuideDetailScreen extends StatelessWidget {
 
   /// Liste des alternatives
   Widget _buildAlternativesList() {
-    final alternatives = _getAlternatives();
-
     return Column(
-      children: alternatives.map((alternative) {
+      children: item.alternatives!.map((alternative) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Row(
@@ -333,88 +334,5 @@ class GuideDetailScreen extends StatelessWidget {
         );
       }).toList(),
     );
-  }
-
-  /// Obtient les instructions selon le type de déchet
-  List<String> _getInstructions() {
-    switch (item.category) {
-      case 'Plastique':
-        return [
-          'Vider complètement le contenu',
-          'Rincer à l\'eau claire',
-          'Enlever le bouchon et l\'étiquette si possible',
-          'Écraser pour gagner de la place',
-        ];
-      case 'Verre':
-        return [
-          'Vider le contenu complètement',
-          'Rincer rapidement',
-          'Retirer les bouchons et capsules',
-          'Ne pas casser le verre',
-        ];
-      case 'Papier':
-        return [
-          'Retirer les parties non-papier (plastique, métal)',
-          'Aplatir les cartons',
-          'Garder au sec',
-          'Ne pas froisser excessivement',
-        ];
-      case 'Dangereux':
-        return [
-          'Ne jamais jeter avec les ordures ménagères',
-          'Conserver dans l\'emballage d\'origine',
-          'Apporter dans un point de collecte spécialisé',
-          'Éviter tout contact avec d\'autres déchets',
-        ];
-      default:
-        return [
-          'Séparer des autres types de déchets',
-          'Nettoyer si nécessaire',
-          'Placer dans le bon conteneur',
-        ];
-    }
-  }
-
-  /// Obtient l'impact environnemental
-  String _getEnvironmentalImpact() {
-    switch (item.category) {
-      case 'Plastique':
-        return '1 tonne de plastique recyclé = 830 litres de pétrole économisés et 2,3 tonnes de CO₂ évitées. Le recyclage du plastique réduit considérablement la pollution marine.';
-      case 'Verre':
-        return '1 tonne de verre recyclé = 1 tonne de matières premières économisées. Le verre peut être recyclé à l\'infini sans perte de qualité.';
-      case 'Papier':
-        return '1 tonne de papier recyclé = 17 arbres sauvés et 26 500 litres d\'eau économisés. Recycler le papier réduit de 74% la pollution de l\'air.';
-      case 'Organique':
-        return 'Le compostage réduit les émissions de méthane et produit un engrais naturel excellent pour les plantes. Il diminue de 30% le volume des déchets ménagers.';
-      default:
-        return 'Recycler ce type de déchet contribue à préserver les ressources naturelles et à réduire l\'impact environnemental.';
-    }
-  }
-
-  /// Vérifie si des alternatives existent
-  bool _hasAlternatives() {
-    return ['Plastique', 'Papier'].contains(item.category);
-  }
-
-  /// Obtient les alternatives écologiques
-  List<String> _getAlternatives() {
-    switch (item.category) {
-      case 'Plastique':
-        return [
-          'Utiliser des gourdes réutilisables en inox',
-          'Privilégier les contenants en verre',
-          'Acheter en vrac pour éviter les emballages',
-          'Opter pour des sacs réutilisables',
-        ];
-      case 'Papier':
-        return [
-          'Utiliser des supports numériques quand possible',
-          'Imprimer recto-verso',
-          'Réutiliser le papier comme brouillon',
-          'Choisir du papier recyclé',
-        ];
-      default:
-        return [];
-    }
   }
 }

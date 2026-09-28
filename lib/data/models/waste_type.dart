@@ -17,7 +17,7 @@ extension WasteTypeExtension on WasteType {
   String get color {
     switch (this) {
       case WasteType.general:
-        return '#2D5F4F'; // Vert foncé
+        return '#4A9B7F'; // Vert émeraude (le #2D5F4F était illisible sur le fond sombre)
       case WasteType.recyclable:
         return '#42A5F5'; // Bleu
       case WasteType.glass:

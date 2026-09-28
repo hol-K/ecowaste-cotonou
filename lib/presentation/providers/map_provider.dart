@@ -1,5 +1,7 @@
 // lib/presentation/providers/map_provider.dart
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,6 +12,7 @@ import '../../data/repositories/points_repository.dart';
 /// Provider pour gérer l'état de la carte
 class MapProvider extends ChangeNotifier {
   final PointsRepository _repository = PointsRepository();
+  StreamSubscription<List<CollectionPoint>>? _subscription;
 
   // ========== ÉTAT ==========
 
@@ -42,24 +45,32 @@ class MapProvider extends ChangeNotifier {
 
   // ========== MÉTHODES PUBLIQUES ==========
 
-  /// Charge tous les points de collecte
+  /// Charge tous les points de collecte (écoute temps réel, un seul abonnement)
   Future<void> loadAllPoints() async {
     _setLoadingPoints(true);
     _clearError();
 
-    try {
-      _repository.getAllPoints().listen((points) {
-        _allPoints = points;
-        _applyFilter();
-        _setLoadingPoints(false);
-      }, onError: (error) {
-        _setError('Erreur lors du chargement des points: $error');
-        _setLoadingPoints(false);
-      });
-    } catch (e) {
-      _setError('Erreur inattendue: $e');
+    await _subscription?.cancel();
+    _subscription = _repository.getAllPoints().listen((points) {
+      _allPoints = points;
+      _applyFilter();
       _setLoadingPoints(false);
-    }
+    }, onError: (error) {
+      _setError('Erreur lors du chargement des points: $error');
+      _setLoadingPoints(false);
+    });
+  }
+
+  /// Charge les points une seule fois (appelé par l'écran au montage)
+  Future<void> ensureLoaded() async {
+    if (_subscription != null) return;
+    await loadAllPoints();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 
   /// Filtre les points par type de déchet
@@ -102,7 +113,9 @@ class MapProvider extends ChangeNotifier {
 
       // Obtenir la position
       Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       _userLocation = LatLng(position.latitude, position.longitude);

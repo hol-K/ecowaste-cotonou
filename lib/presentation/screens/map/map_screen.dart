@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../../data/models/collection_point.dart';
+import '../../../data/models/waste_type.dart';
+import '../../providers/map_provider.dart';
+import '../../widgets/waste_visuals.dart';
 
-/// Écran de la carte des points de collecte avec OpenStreetMap
+/// Écran de la carte des points de collecte (OpenStreetMap + Firestore)
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 
@@ -13,80 +18,15 @@ class MapScreen extends StatefulWidget {
 
 class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
-  String _selectedFilter = 'Tous';
-  LatLng? _userLocation;
-  bool _isLoadingLocation = false;
 
-  
-  final LatLng _cotonouCenter = const LatLng(6.3654, 2.4183);
-
-  final List<String> _filters = [
-    'Tous',
-    'Déchetterie',
-    'Recyclage',
-    'Verre',
-    'Dangereux',
-    'Électronique',
-  ];
-
-  // Points de collecte avec coordonnées réelles de Cotonou
-  final List<CollectionPoint> _points = [
-    CollectionPoint(
-      name: 'Déchetterie Municipale d\'Akpakpa',
-      address: 'Route de Porto-Novo, Akpakpa',
-      types: ['Tous types'],
-      location: const LatLng(6.3598, 2.4378),
-      isOpen: true,
-      color: const Color(0xFF4A9B7F),
-      phone: '+229 97 00 00 01',
-      hours: 'Lun-Sam: 08:00-18:00',
-    ),
-    CollectionPoint(
-      name: 'Point de Collecte Recyclable Cadjèhoun',
-      address: 'Avenue Steinmetz, Cadjèhoun',
-      types: ['Recyclables', 'Papier'],
-      location: const LatLng(6.3745, 2.4289),
-      isOpen: true,
-      color: const Color(0xFF42A5F5),
-      phone: '+229 97 00 00 02',
-      hours: 'Lun-Sam: 08:00-18:00',
-    ),
-    CollectionPoint(
-      name: 'Centre de Tri de Godomey',
-      address: 'Route de Ouidah, Godomey',
-      types: ['Tous types'],
-      location: const LatLng(6.3890, 2.3456),
-      isOpen: false,
-      color: const Color(0xFF4A9B7F),
-      phone: '+229 97 00 00 03',
-      hours: 'Lun-Sam: 08:00-18:00',
-    ),
-    CollectionPoint(
-      name: 'Point de Collecte DEEE Fidjrossè',
-      address: 'Boulevard de la Marina, Fidjrossè',
-      types: ['Électronique', 'Dangereux'],
-      location: const LatLng(6.3512, 2.4512),
-      isOpen: true,
-      color: const Color(0xFFAB47BC),
-      phone: '+229 97 00 00 04',
-      hours: 'Lun-Sam: 08:00-18:00',
-    ),
-    CollectionPoint(
-      name: 'Recyclerie Communautaire de Vossa',
-      address: 'Quartier Vossa',
-      types: ['Recyclables', 'Verre'],
-      location: const LatLng(6.3823, 2.4423),
-      isOpen: true,
-      color: const Color(0xFF42A5F5),
-      phone: '+229 97 00 00 05',
-      hours: 'Lun-Sam: 08:00-18:00',
-    ),
-  ];
+  static const LatLng _cotonouCenter = LatLng(6.3654, 2.4183);
 
   @override
   void initState() {
     super.initState();
-    _getUserLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MapProvider>().ensureLoaded();
+    });
   }
 
   @override
@@ -95,99 +35,54 @@ class _MapScreenState extends State<MapScreen> {
     super.dispose();
   }
 
-  /// Filtre les points selon le filtre sélectionné
-  List<CollectionPoint> get _filteredPoints {
-    if (_selectedFilter == 'Tous') return _points;
-    return _points.where((point) {
-      return point.types.any((type) =>
-          type.toLowerCase().contains(_selectedFilter.toLowerCase()));
-    }).toList();
-  }
-
-  /// Obtient la position GPS de l'utilisateur
-  Future<void> _getUserLocation() async {
-    setState(() {
-      _isLoadingLocation = true;
-    });
-
-    try {
-      // Vérifier les permissions
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showSnackBar('Permission de localisation refusée');
-          setState(() {
-            _isLoadingLocation = false;
-          });
-          return;
-        }
-      }
-
-      if (permission == LocationPermission.deniedForever) {
-        _showSnackBar('Permission de localisation refusée définitivement');
-        setState(() {
-          _isLoadingLocation = false;
-        });
-        return;
-      }
-
-      // Obtenir la position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      setState(() {
-        _userLocation = LatLng(position.latitude, position.longitude);
-        _isLoadingLocation = false;
-      });
-
-      // Centrer la carte sur la position de l'utilisateur
-      _mapController.move(_userLocation!, 13.0);
-    } catch (e) {
-      _showSnackBar('Erreur lors de la récupération de la position');
-      setState(() {
-        _isLoadingLocation = false;
-      });
+  /// Centre la carte sur la position de l'utilisateur (la demande si besoin)
+  Future<void> _centerOnUserLocation() async {
+    final provider = context.read<MapProvider>();
+    if (!provider.hasUserLocation) {
+      await provider.getUserLocation();
+      if (!mounted) return;
     }
-  }
 
-  /// Centre la carte sur la position de l'utilisateur
-  void _centerOnUserLocation() {
-    if (_userLocation != null) {
-      _mapController.move(_userLocation!, 15.0);
-    } else {
-      _getUserLocation();
+    if (provider.userLocation != null) {
+      _mapController.move(provider.userLocation!, 15.0);
+    } else if (provider.errorMessage != null) {
+      _showSnackBar(provider.errorMessage!);
     }
   }
 
   /// Affiche un message
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2),
-      ),
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
   }
 
-  /// Calcule la distance entre deux points
-  double _calculateDistance(LatLng point1, LatLng point2) {
-    const Distance distance = Distance();
-    return distance.as(LengthUnit.Kilometer, point1, point2);
+  /// Ouvre une URL externe (itinéraire, appel)
+  Future<void> _launch(String url) async {
+    final ok = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!ok && mounted) _showSnackBar('Impossible d\'ouvrir $url');
   }
 
-  /// Formate la distance
-  String _formatDistance(double distanceKm) {
-    if (distanceKm < 1) {
-      return '${(distanceKm * 1000).round()} m';
-    } else {
-      return '${distanceKm.toStringAsFixed(1)} km';
+  /// Couleur d'un point : celle de son type si spécialisé, sinon l'accent
+  Color _pointColor(CollectionPoint point) {
+    if (point.acceptedWasteTypes.isEmpty ||
+        point.acceptedWasteTypes.length > 3 ||
+        point.acceptsWasteType(WasteType.general)) {
+      return const Color(0xFF4A9B7F);
     }
+    return point.acceptedWasteTypes.first.uiColor;
   }
+
+  LatLng _latLng(CollectionPoint point) => LatLng(point.latitude, point.longitude);
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<MapProvider>();
+    final points = provider.getPointsSortedByDistance();
+
     return Scaffold(
       backgroundColor: const Color(0xFF1A3329),
       appBar: AppBar(
@@ -197,17 +92,15 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: Stack(
         children: [
-          // Carte OpenStreetMap
           FlutterMap(
             mapController: _mapController,
-            options: MapOptions(
+            options: const MapOptions(
               initialCenter: _cotonouCenter,
               initialZoom: 12.0,
               minZoom: 10.0,
               maxZoom: 18.0,
             ),
             children: [
-              // Tuiles OpenStreetMap
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.ecowaste_cotonou',
@@ -216,21 +109,22 @@ class _MapScreenState extends State<MapScreen> {
 
               // Marqueurs des points de collecte
               MarkerLayer(
-                markers: _filteredPoints.map((point) {
+                markers: points.map((point) {
+                  final color = _pointColor(point);
                   return Marker(
-                    point: point.location,
+                    point: _latLng(point),
                     width: 40,
                     height: 40,
                     child: GestureDetector(
                       onTap: () => _showPointDetails(point),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: point.color,
+                          color: color,
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
+                              color: Colors.black.withValues(alpha: 0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -247,17 +141,17 @@ class _MapScreenState extends State<MapScreen> {
                 }).toList(),
               ),
 
-              // Marqueur de la position utilisateur
-              if (_userLocation != null)
+              // Position de l'utilisateur
+              if (provider.userLocation != null)
                 MarkerLayer(
                   markers: [
                     Marker(
-                      point: _userLocation!,
+                      point: provider.userLocation!,
                       width: 50,
                       height: 50,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A9B7F).withOpacity(0.3),
+                          color: const Color(0xFF4A9B7F).withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -279,12 +173,7 @@ class _MapScreenState extends State<MapScreen> {
           ),
 
           // Filtres en haut
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: _buildFilters(),
-          ),
+          Positioned(top: 0, left: 0, right: 0, child: _buildFilters(provider)),
 
           // Compteur de points
           Positioned(
@@ -293,24 +182,28 @@ class _MapScreenState extends State<MapScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A3329).withOpacity(0.9),
+                color: const Color(0xFF1A3329).withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: const Color(0xFF4A9B7F),
-                  width: 2,
-                ),
+                border: Border.all(color: const Color(0xFF4A9B7F), width: 2),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.location_on,
-                    color: Color(0xFF4A9B7F),
-                    size: 18,
-                  ),
+                  if (provider.isLoadingPoints)
+                    const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    const Icon(
+                      Icons.location_on,
+                      color: Color(0xFF4A9B7F),
+                      size: 18,
+                    ),
                   const SizedBox(width: 6),
                   Text(
-                    '${_filteredPoints.length} points',
+                    '${points.length} points',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -326,12 +219,11 @@ class _MapScreenState extends State<MapScreen> {
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Bouton centrer sur ma position
           FloatingActionButton(
             heroTag: 'my_location',
             onPressed: _centerOnUserLocation,
             backgroundColor: const Color(0xFF4A9B7F),
-            child: _isLoadingLocation
+            child: provider.isLoadingLocation
                 ? const SizedBox(
                     width: 24,
                     height: 24,
@@ -343,10 +235,9 @@ class _MapScreenState extends State<MapScreen> {
                 : const Icon(Icons.my_location),
           ),
           const SizedBox(height: 12),
-          // Bouton liste
           FloatingActionButton(
             heroTag: 'list',
-            onPressed: () => _showPointsList(),
+            onPressed: _showPointsList,
             backgroundColor: const Color(0xFF2D5F4F),
             child: const Icon(Icons.list),
           ),
@@ -355,8 +246,12 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /// Style sombre pour les tuiles (optionnel)
-  Widget _darkModeTileBuilder(BuildContext context, Widget tileWidget, TileImage tile) {
+  /// Style sombre pour les tuiles
+  Widget _darkModeTileBuilder(
+    BuildContext context,
+    Widget tileWidget,
+    TileImage tile,
+  ) {
     return ColorFiltered(
       colorFilter: const ColorFilter.matrix([
         0.2126, 0.7152, 0.0722, 0, 0,
@@ -369,31 +264,27 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// Filtres par type de déchet
-  Widget _buildFilters() {
+  Widget _buildFilters(MapProvider provider) {
+    final filters = <WasteType?>[null, ...WasteType.values];
+
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D5F4F).withOpacity(0.95),
-      ),
+      color: const Color(0xFF2D5F4F).withValues(alpha: 0.95),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: _filters.length,
+        itemCount: filters.length,
         itemBuilder: (context, index) {
-          final filter = _filters[index];
-          final isSelected = filter == _selectedFilter;
+          final filter = filters[index];
+          final isSelected = filter == provider.selectedFilter;
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
-              label: Text(filter),
+              label: Text(filter?.displayName ?? 'Tous'),
               selected: isSelected,
-              onSelected: (selected) {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
+              onSelected: (_) => provider.filterByWasteType(filter),
               backgroundColor: const Color(0xFF234037),
               selectedColor: const Color(0xFF4A9B7F),
               labelStyle: TextStyle(
@@ -408,20 +299,22 @@ class _MapScreenState extends State<MapScreen> {
     );
   }
 
-  /// Affiche la liste des points en bottom sheet
+  /// Affiche la liste des points (triés par distance si position connue)
   void _showPointsList() {
+    final provider = context.read<MapProvider>();
+    final points = provider.getPointsSortedByDistance();
+
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1A3329),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
+      builder: (sheetContext) => Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
             Center(
               child: Container(
                 width: 40,
@@ -433,10 +326,8 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Titre
             Text(
-              'Points de collecte (${_filteredPoints.length})',
+              'Points de collecte (${points.length})',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -444,20 +335,19 @@ class _MapScreenState extends State<MapScreen> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Liste
             Expanded(
-              child: ListView.builder(
-                itemCount: _filteredPoints.length,
-                itemBuilder: (context, index) {
-                  final point = _filteredPoints[index];
-                  final distance = _userLocation != null
-                      ? _calculateDistance(_userLocation!, point.location)
-                      : null;
-
-                  return _buildPointListItem(point, distance);
-                },
-              ),
+              child: points.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'Aucun point pour ce filtre',
+                        style: TextStyle(color: Color(0xFFB8C5C0)),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: points.length,
+                      itemBuilder: (context, index) =>
+                          _buildPointListItem(sheetContext, points[index]),
+                    ),
             ),
           ],
         ),
@@ -466,14 +356,18 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   /// Item de la liste
-  Widget _buildPointListItem(CollectionPoint point, double? distance) {
+  Widget _buildPointListItem(BuildContext sheetContext, CollectionPoint point) {
+    final provider = context.read<MapProvider>();
+    final color = _pointColor(point);
+    final distance = provider.userLocation != null
+        ? provider.calculateDistance(provider.userLocation!, _latLng(point))
+        : null;
+
     return GestureDetector(
       onTap: () {
-        Navigator.pop(context);
-        _mapController.move(point.location, 16.0);
-        Future.delayed(const Duration(milliseconds: 500), () {
-          _showPointDetails(point);
-        });
+        Navigator.pop(sheetContext);
+        _mapController.move(_latLng(point), 16.0);
+        _showPointDetails(point);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
@@ -481,24 +375,17 @@ class _MapScreenState extends State<MapScreen> {
         decoration: BoxDecoration(
           color: const Color(0x14FFFFFF),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: point.color.withOpacity(0.3),
-            width: 1,
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: point.color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                Icons.location_on,
-                color: point.color,
-                size: 24,
-              ),
+              child: Icon(Icons.location_on, color: color, size: 24),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -513,23 +400,20 @@ class _MapScreenState extends State<MapScreen> {
                       color: Colors.white,
                     ),
                   ),
-                  if (distance != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatDistance(distance),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFFB8C5C0),
-                      ),
+                  const SizedBox(height: 4),
+                  Text(
+                    distance != null
+                        ? provider.formatDistance(distance)
+                        : point.address,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFB8C5C0),
                     ),
-                  ],
+                  ),
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right,
-              color: Color(0xFFB8C5C0),
-            ),
+            const Icon(Icons.chevron_right, color: Color(0xFFB8C5C0)),
           ],
         ),
       ),
@@ -538,145 +422,127 @@ class _MapScreenState extends State<MapScreen> {
 
   /// Affiche les détails d'un point
   void _showPointDetails(CollectionPoint point) {
-    final distance = _userLocation != null
-        ? _calculateDistance(_userLocation!, point.location)
+    final provider = context.read<MapProvider>();
+    final color = _pointColor(point);
+    final distance = provider.userLocation != null
+        ? provider.calculateDistance(provider.userLocation!, _latLng(point))
         : null;
+    final phoneUrl = point.getPhoneUrl();
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: const Color(0xFF234037),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFB8C5C0),
-                  borderRadius: BorderRadius.circular(2),
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFB8C5C0),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-            // Nom et statut
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    point.name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+              Text(
+                point.name,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: point.isOpen
-                        ? const Color(0xFF66BB6A).withOpacity(0.2)
-                        : const Color(0xFFEF5350).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    point.isOpen ? 'Ouvert' : 'Fermé',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: point.isOpen
-                          ? const Color(0xFF66BB6A)
-                          : const Color(0xFFEF5350),
-                    ),
-                  ),
+              ),
+
+              if (point.description != null && point.description!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  point.description!,
+                  style: const TextStyle(color: Color(0xFFB8C5C0)),
                 ),
               ],
-            ),
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Informations
-            if (distance != null)
-              _buildDetailRow(
-                Icons.place,
-                _formatDistance(distance),
-                'de votre position',
-              ),
-            const SizedBox(height: 12),
-            _buildDetailRow(Icons.home_work_outlined, point.address, ''),
-            const SizedBox(height: 12),
-            _buildDetailRow(Icons.access_time, point.hours, ''),
-            const SizedBox(height: 12),
-            _buildDetailRow(Icons.phone, point.phone, 'Appeler'),
+              if (distance != null) ...[
+                _buildDetailRow(
+                  Icons.place,
+                  provider.formatDistance(distance),
+                  'de votre position',
+                ),
+                const SizedBox(height: 12),
+              ],
+              _buildDetailRow(Icons.home_work_outlined, point.address, ''),
+              const SizedBox(height: 12),
+              _buildDetailRow(Icons.access_time, point.openingHours, ''),
+              if (phoneUrl != null) ...[
+                const SizedBox(height: 12),
+                InkWell(
+                  onTap: () => _launch(phoneUrl),
+                  child: _buildDetailRow(Icons.phone, point.phone!, 'Appeler'),
+                ),
+              ],
 
-            const SizedBox(height: 16),
+              const SizedBox(height: 16),
 
-            // Types acceptés
-            const Text(
-              'Déchets acceptés :',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: point.types.map((type) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: point.color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    type,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: point.color,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Bouton itinéraire
-            SizedBox(
-              width: double.infinity,
-              height: 54,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showSnackBar('Fonctionnalité itinéraire à venir...');
-                },
-                icon: const Icon(Icons.directions),
-                label: const Text('Itinéraire'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A9B7F),
+              const Text(
+                'Déchets acceptés :',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: point.acceptedWasteTypes.map((type) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: type.uiColor.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      type.displayName,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: type.uiColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+
+              const SizedBox(height: 24),
+
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: () => _launch(point.getNavigationUrl()),
+                  icon: const Icon(Icons.directions),
+                  label: const Text('Itinéraire'),
+                  style: ElevatedButton.styleFrom(backgroundColor: color),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -705,10 +571,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subText,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB8C5C0),
-                  ),
+                  style: const TextStyle(fontSize: 12, color: Color(0xFFB8C5C0)),
                 ),
               ],
             ],
@@ -717,27 +580,4 @@ class _MapScreenState extends State<MapScreen> {
       ],
     );
   }
-}
-
-/// Modèle de données pour un point de collecte
-class CollectionPoint {
-  final String name;
-  final String address;
-  final List<String> types;
-  final LatLng location;
-  final bool isOpen;
-  final Color color;
-  final String phone;
-  final String hours;
-
-  CollectionPoint({
-    required this.name,
-    required this.address,
-    required this.types,
-    required this.location,
-    required this.isOpen,
-    required this.color,
-    required this.phone,
-    required this.hours,
-  });
 }
