@@ -33,6 +33,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Lien profond Supabase : confirmation d'email / mot de passe oublié -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="io.supabase.ecowaste" android:host="login-callback"/>
+            </intent-filter>
         </activity>
 
         <!-- Receivers flutter_local_notifications (rappels planifiés, survivent au reboot) -->

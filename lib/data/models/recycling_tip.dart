@@ -1,6 +1,5 @@
 // lib/data/models/recycling_tip.dart
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Type de contenu pour un conseil de recyclage
 enum TipType {
@@ -216,7 +215,7 @@ class RecyclingTip {
 
   // ========== SÉRIALISATION FIRESTORE ==========
 
-  /// Conversion depuis Map (Firestore → Dart)
+  /// Conversion depuis Map (base de données → Dart)
   factory RecyclingTip.fromMap(Map<String, dynamic> map, String id) {
     return RecyclingTip(
       id: id,
@@ -235,7 +234,7 @@ class RecyclingTip {
       videoUrl: map['videoUrl'],
       readingTimeMinutes: map['readingTimeMinutes'] ?? 5,
       tags: List<String>.from(map['tags'] ?? []),
-      publishedAt: (map['publishedAt'] as Timestamp).toDate(),
+      publishedAt: DateTime.tryParse(map['publishedAt'] ?? '') ?? DateTime.now(),
       viewCount: map['viewCount'] ?? 0,
       likeCount: map['likeCount'] ?? 0,
       author: map['author'] ?? 'EcoWaste Cotonou',
@@ -243,7 +242,7 @@ class RecyclingTip {
     );
   }
 
-  /// Conversion vers Map (Dart → Firestore)
+  /// Conversion vers Map (Dart → base de données)
   Map<String, dynamic> toMap() {
     return {
       'title': title,
@@ -255,7 +254,7 @@ class RecyclingTip {
       'videoUrl': videoUrl,
       'readingTimeMinutes': readingTimeMinutes,
       'tags': tags,
-      'publishedAt': Timestamp.fromDate(publishedAt),
+      'publishedAt': publishedAt.toUtc().toIso8601String(),
       'viewCount': viewCount,
       'likeCount': likeCount,
       'author': author,

@@ -117,23 +117,6 @@ class GuideProvider extends ChangeNotifier {
     }
   }
 
-  /// Initialise le guide avec des données de base (pour tests)
-  Future<bool> initializeGuideData() async {
-    _setLoading(true);
-    try {
-      final success = await _repository.initializeGuideData();
-      if (success) {
-        await loadAllItems();
-      }
-      return success;
-    } catch (e) {
-      _setError('Erreur lors de l\'initialisation: $e');
-      return false;
-    } finally {
-      _setLoading(false);
-    }
-  }
-
   // ========== MÉTHODES PRIVÉES ==========
 
   /// Applique les filtres sur la liste complète

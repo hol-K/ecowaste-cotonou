@@ -4,7 +4,7 @@ void main() {
   group('Integration Tests - User Interactions', () {
     testWidgets('Full app flow simulation', (WidgetTester tester) async {
       // This is a placeholder for real integration tests
-      // Real integration tests would test the full app flow with Firebase mocking
+      // Real integration tests would test the full app flow with Supabase mocking
       
       // Test example structure:
       // 1. Launch the app
@@ -25,7 +25,7 @@ void main() {
 
     testWidgets('Data loading and display', (WidgetTester tester) async {
       // Placeholder for data flow testing
-      // Real tests would verify data from Firebase displays correctly
+      // Real tests would verify data from Supabase displays correctly
       
       expect(true, isTrue);
     });

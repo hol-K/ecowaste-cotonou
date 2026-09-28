@@ -8,7 +8,7 @@ import '../../../data/models/waste_type.dart';
 import '../../providers/map_provider.dart';
 import '../../widgets/waste_visuals.dart';
 
-/// Écran de la carte des points de collecte (OpenStreetMap + Firestore)
+/// Écran de la carte des points de collecte (OpenStreetMap + Supabase)
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
 

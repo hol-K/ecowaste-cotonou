@@ -156,7 +156,7 @@ class NotificationSettings {
 
   //SÉRIALISATION FIRESTORE
 
-  /// Conversion depuis Map (Firestore → Dart)
+  /// Conversion depuis Map (base de données → Dart)
   factory NotificationSettings.fromMap(Map<String, dynamic> map) {
     return NotificationSettings(
       enabled: map['enabled'] ?? true,
@@ -180,7 +180,7 @@ class NotificationSettings {
     );
   }
 
-  /// Conversion vers Map (Dart → Firestore)
+  /// Conversion vers Map (Dart → base de données)
   Map<String, dynamic> toMap() {
     return {
       'enabled': enabled,

@@ -11,7 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('MyApp builds without error', (WidgetTester tester) async {
     // This test is a placeholder for actual widget tests
-    // Real tests would require proper mocking of Firebase and Providers
+    // Real tests would require proper mocking of Supabase and Providers
     
     // For now, we just verify the basic Material App structure
     final testApp = MaterialApp(

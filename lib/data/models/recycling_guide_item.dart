@@ -66,44 +66,39 @@ class RecyclingGuideItem {
   /// Vérifie si des alternatives écologiques sont disponibles
   bool get hasAlternatives => alternatives != null && alternatives!.isNotEmpty;
 
-  //SÉRIALISATION FIRESTORE
+  //SÉRIALISATION SUPABASE (table recycling_guide_items)
 
-  /// Conversion depuis Map (Firestore → Dart).
-  /// Accepte le nom de l'enum (`plastic`) mais aussi le libellé affiché
-  /// (`Plastiques`) écrit par les anciennes versions de [toMap].
-  factory RecyclingGuideItem.fromMap(Map<String, dynamic> map, String id) {
+  /// Conversion depuis une ligne Supabase. Les colonnes category et
+  /// waste_type sont des enums Postgres aux mêmes valeurs que les enums Dart.
+  factory RecyclingGuideItem.fromMap(Map<String, dynamic> map) {
     return RecyclingGuideItem(
-      id: id,
+      id: map['id'] as String,
       name: map['name'] ?? '',
-      category: RecyclingCategory.values.firstWhere(
-        (e) => e.name == map['category'] || e.displayName == map['category'],
-        orElse: () => RecyclingCategory.plastic,
-      ),
-      wasteType: WasteType.values.firstWhere(
-        (e) => e.name == map['wasteType'] || e.displayName == map['wasteType'],
-        orElse: () => WasteType.general,
-      ),
-      imageUrl: map['imageUrl'] ?? '',
+      category: RecyclingCategory.values.asNameMap()[map['category']] ??
+          RecyclingCategory.plastic,
+      wasteType: WasteType.values.asNameMap()[map['waste_type']] ??
+          WasteType.general,
+      imageUrl: map['image_url'] ?? '',
       description: map['description'] ?? '',
-      instructions: List<String>.from(map['instructions'] ?? []),
-      environmentalImpact: map['environmentalImpact'] ?? '',
-      keywords: List<String>.from(map['keywords'] ?? []),
+      instructions: List<String>.from(map['instructions'] ?? const []),
+      environmentalImpact: map['environmental_impact'] ?? '',
+      keywords: List<String>.from(map['keywords'] ?? const []),
       alternatives: map['alternatives'] != null
           ? List<String>.from(map['alternatives'])
           : null,
     );
   }
 
-  /// Conversion vers Map (Dart → Firestore)
+  /// Conversion vers une ligne Supabase
   Map<String, dynamic> toMap() {
     return {
       'name': name,
       'category': category.name,
-      'wasteType': wasteType.name,
-      'imageUrl': imageUrl,
+      'waste_type': wasteType.name,
+      'image_url': imageUrl,
       'description': description,
       'instructions': instructions,
-      'environmentalImpact': environmentalImpact,
+      'environmental_impact': environmentalImpact,
       'keywords': keywords,
       'alternatives': alternatives,
     };

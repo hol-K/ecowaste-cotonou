@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
+import '../../../data/models/user_profile.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
@@ -65,7 +67,11 @@ class ProfileScreen extends StatelessWidget {
   }
 
   /// Header du profil
-  Widget _buildProfileHeader(context, user, profile) {
+  Widget _buildProfileHeader(
+    BuildContext context,
+    User user,
+    UserProfile? profile,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -115,7 +121,9 @@ class ProfileScreen extends StatelessWidget {
 
           // Nom
           Text(
-            profile?.name ?? user.displayName ?? 'Utilisateur',
+            profile?.name ??
+                user.userMetadata?['name'] as String? ??
+                'Utilisateur',
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -167,7 +175,7 @@ class ProfileScreen extends StatelessWidget {
   }
 
   /// Statistiques utilisateur
-  Widget _buildStatistics(profile) {
+  Widget _buildStatistics(UserProfile profile) {
     final stats = profile.statistics;
 
     return Container(

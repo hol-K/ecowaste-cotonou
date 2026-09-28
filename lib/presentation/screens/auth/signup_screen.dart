@@ -52,8 +52,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     final authProvider = context.read<AuthProvider>();
 
-    final success = await authProvider.signUp(
-      email: _emailController.text.trim(),
+    final email = _emailController.text.trim();
+    final result = await authProvider.signUp(
+      email: email,
       password: _passwordController.text,
       name: _nameController.text.trim(),
       district: _selectedDistrict,
@@ -61,7 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (!mounted) return;
 
-    if (success) {
+    if (result == SignUpResult.signedIn) {
       // Navigation vers Home (pile vidée : retour ≠ revenir à l'inscription)
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pushAndRemoveUntil(
@@ -76,6 +77,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           backgroundColor: Color(0xFF66BB6A),
         ),
       );
+    } else if (result == SignUpResult.confirmationRequired) {
+      await _showConfirmEmailDialog(email);
     } else {
       // Afficher l'erreur
       ScaffoldMessenger.of(context).showSnackBar(
@@ -85,6 +88,62 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
           backgroundColor: const Color(0xFFEF5350),
         ),
+      );
+    }
+  }
+
+  /// Compte créé mais email à confirmer : on explique, puis retour au login
+  Future<void> _showConfirmEmailDialog(String email) async {
+    final authProvider = context.read<AuthProvider>();
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        icon: const Icon(
+          Icons.mark_email_unread_outlined,
+          size: 48,
+          color: Color(0xFF4A9B7F),
+        ),
+        title: const Text('Vérifiez votre boîte mail'),
+        content: Text(
+          'Un lien de confirmation a été envoyé à $email.\n\n'
+          'Ouvrez-le depuis ce téléphone pour activer votre compte, '
+          'puis connectez-vous. Pensez à regarder dans les spams.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              final sent = await authProvider.resendConfirmation(email);
+              if (!dialogContext.mounted) return;
+              ScaffoldMessenger.of(dialogContext).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    sent
+                        ? 'Email renvoyé.'
+                        : authProvider.errorMessage ?? 'Échec de l\'envoi',
+                  ),
+                ),
+              );
+            },
+            child: const Text('Renvoyer l\'email'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Compris'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted) return;
+    // Retour au login (placé sous l'inscription par l'onboarding / le login)
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigator.pushReplacement(
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
       );
     }
   }

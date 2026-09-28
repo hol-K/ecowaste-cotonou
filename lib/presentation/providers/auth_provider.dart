@@ -3,26 +3,29 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/services/auth_service.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/repositories/user_repository.dart';
 
+export '../../data/services/auth_service.dart' show SignUpResult;
+
 /// Source de vérité unique pour l'utilisateur connecté et son profil.
-/// Le profil est écouté en temps réel : toute écriture dans Firestore
-/// (édition, réglages de notifications…) se reflète automatiquement.
+/// Le profil est écouté en temps réel : toute écriture (édition, réglages
+/// de notifications…) se reflète automatiquement.
 class AuthProvider with ChangeNotifier {
   final UserRepository _userRepository;
   late final AuthService _authService;
 
   StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<AuthChangeEvent>? _eventSubscription;
   StreamSubscription<UserProfile?>? _profileSubscription;
 
   User? _user;
   UserProfile? _userProfile;
   bool _isLoading = false;
-  bool _isSigningUp = false;
   bool _streakChecked = false;
+  bool _passwordRecovery = false;
   String? _errorMessage;
 
   // Getters
@@ -32,21 +35,45 @@ class AuthProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _user != null;
 
-  AuthProvider({FirebaseAuth? auth, UserRepository? userRepository})
+  /// Vrai quand l'app a été ouverte par un lien « mot de passe oublié » :
+  /// l'utilisateur doit choisir un nouveau mot de passe.
+  bool get isPasswordRecovery => _passwordRecovery;
+
+  AuthProvider({GoTrueClient? auth, UserRepository? userRepository})
     : _userRepository = userRepository ?? UserRepository() {
-    _authService = AuthService(auth ?? FirebaseAuth.instance, _userRepository);
-    _authSubscription = _authService.authStateChanges.listen(_onAuthChanged);
+    _authService = AuthService(
+      auth ?? Supabase.instance.client.auth,
+      _userRepository,
+    );
+    _onAuthChanged(_authService.currentUser);
+    _authSubscription = _authService.authStateChanges.listen(
+      _onAuthChanged,
+      // Hors connexion, le rafraîchissement du jeton émet une erreur ici
+      onError: (e) => debugPrint('Erreur de session : $e'),
+    );
+    _eventSubscription = _authService.authEvents.listen((event) {
+      if (event == AuthChangeEvent.passwordRecovery) {
+        _passwordRecovery = true;
+        notifyListeners();
+      }
+    }, onError: (_) {});
   }
 
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _eventSubscription?.cancel();
     _profileSubscription?.cancel();
     super.dispose();
   }
 
   /// Réagit à la connexion / déconnexion
   void _onAuthChanged(User? user) {
+    if (user?.id == _user?.id && _profileSubscription != null) {
+      _user = user; // simple rafraîchissement de jeton
+      return;
+    }
+
     _user = user;
     _userProfile = null;
     _streakChecked = false;
@@ -55,38 +82,20 @@ class AuthProvider with ChangeNotifier {
 
     if (user != null) {
       _profileSubscription = _userRepository
-          .getUserProfileStream(user.uid)
+          .getUserProfileStream(user.id)
           .listen(
-            (profile) => _onProfile(user, profile),
-            onError: (e) => debugPrint('Erreur chargement profil: $e'),
+            _onProfile,
+            onError: (e) => debugPrint('Erreur chargement profil : $e'),
           );
     }
     notifyListeners();
   }
 
-  Future<void> _onProfile(User user, UserProfile? profile) async {
-    if (profile == null) {
-      // Compte Auth sans profil (ex: inscription interrompue) : on le recrée.
-      // Pendant une inscription, c'est signUp() qui écrit le profil complet.
-      if (!_isSigningUp) {
-        try {
-          await _userRepository.createUserProfile(
-            UserProfile.initial(
-              id: user.uid,
-              email: user.email,
-              name: user.displayName,
-            ),
-          );
-        } catch (e) {
-          debugPrint('Erreur création profil: $e');
-        }
-      }
-      return; // le stream renverra le profil créé
-    }
-
+  void _onProfile(UserProfile? profile) {
+    if (profile == null) return;
     _userProfile = profile;
     notifyListeners();
-    await _updateStreakOncePerDay(profile);
+    _updateStreakOncePerDay(profile);
   }
 
   /// Met à jour les jours consécutifs, au plus une écriture par jour
@@ -98,107 +107,86 @@ class AuthProvider with ChangeNotifier {
     final now = DateTime.now();
     final sameDay =
         last.year == now.year && last.month == now.month && last.day == now.day;
-    if (sameDay) return;
+    // Profil tout neuf ({} en base) : on initialise aussi les statistiques
+    if (sameDay && profile.statistics.consecutiveDays > 0) return;
 
     try {
       await _userRepository.updateUserProfile(
         profile.updateStatistics(profile.statistics.updateConsecutiveDays()),
       );
     } catch (e) {
-      debugPrint('Erreur mise à jour des jours consécutifs: $e');
+      debugPrint('Erreur mise à jour des jours consécutifs : $e');
     }
   }
 
-  /// Inscription avec email
-  Future<bool> signUp({
+  /// Inscription avec email. Renvoie null en cas d'échec ([errorMessage]).
+  Future<SignUpResult?> signUp({
     required String email,
     required String password,
     required String name,
     required String district,
-  }) async {
-    _isSigningUp = true;
-    try {
-      _setLoading(true);
-      _errorMessage = null;
-
-      await _authService.signUpWithEmail(
+  }) {
+    return _run(
+      () => _authService.signUpWithEmail(
         email: email,
         password: password,
         name: name,
         district: district,
-      );
-
-      _setLoading(false);
-      return true;
-    } catch (e) {
-      _errorMessage = _readableError(e);
-      _setLoading(false);
-      return false;
-    } finally {
-      _isSigningUp = false;
-    }
+      ),
+    );
   }
 
   /// Connexion avec email
   Future<bool> signIn({required String email, required String password}) async {
-    try {
-      _setLoading(true);
-      _errorMessage = null;
-
+    final ok = await _run(() async {
       await _authService.signInWithEmail(email: email, password: password);
-
-      _setLoading(false);
       return true;
-    } catch (e) {
-      _errorMessage = _readableError(e);
-      _setLoading(false);
-      return false;
-    }
+    });
+    return ok ?? false;
   }
 
   /// Déconnexion
-  Future<void> signOut() async {
-    try {
-      _setLoading(true);
-      await _authService.signOut();
-      _setLoading(false);
-    } catch (e) {
-      _errorMessage = _readableError(e);
-      _setLoading(false);
-    }
+  Future<void> signOut() => _run(_authService.signOut);
+
+  /// Envoie l'email de réinitialisation du mot de passe
+  Future<bool> resetPassword(String email) async {
+    final ok = await _run(() async {
+      await _authService.resetPassword(email);
+      return true;
+    });
+    return ok ?? false;
   }
 
-  /// Réinitialisation du mot de passe
-  Future<bool> resetPassword(String email) async {
-    try {
-      _setLoading(true);
-      _errorMessage = null;
-
-      await _authService.resetPassword(email);
-
-      _setLoading(false);
+  /// Renvoie l'email de confirmation d'inscription
+  Future<bool> resendConfirmation(String email) async {
+    final ok = await _run(() async {
+      await _authService.resendConfirmation(email);
       return true;
-    } catch (e) {
-      _errorMessage = _readableError(e);
-      _setLoading(false);
-      return false;
+    });
+    return ok ?? false;
+  }
+
+  /// Enregistre le nouveau mot de passe après un lien de réinitialisation
+  Future<bool> updatePassword(String newPassword) async {
+    final ok = await _run(() async {
+      await _authService.updatePassword(newPassword);
+      return true;
+    });
+    if (ok == true) {
+      _passwordRecovery = false;
+      notifyListeners();
     }
+    return ok ?? false;
   }
 
   /// Met à jour le profil utilisateur. Renvoie `false` si l'écriture échoue.
   Future<bool> updateProfile(UserProfile profile) async {
-    try {
-      _setLoading(true);
-      _errorMessage = null;
+    final ok = await _run(() async {
       await _userRepository.updateUserProfile(profile);
       _userProfile = profile;
-      _setLoading(false);
       return true;
-    } catch (e) {
-      _errorMessage = _readableError(e);
-      _setLoading(false);
-      return false;
-    }
+    });
+    return ok ?? false;
   }
 
   /// Efface le message d'erreur
@@ -207,13 +195,25 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Définit l'état de chargement
-  void _setLoading(bool value) {
-    _isLoading = value;
+  /// Exécute une action en gérant chargement et message d'erreur.
+  /// Renvoie null si l'action a échoué.
+  Future<T?> _run<T>(Future<T> Function() action) async {
+    _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
+    try {
+      return await action();
+    } catch (e) {
+      // AuthService lève des String déjà traduites
+      _errorMessage = e is String
+          ? e
+          : e is PostgrestException
+          ? e.message
+          : e.toString().replaceFirst('Exception: ', '');
+      return null;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
-
-  /// AuthService lève des String (messages traduits) ou des Exception
-  String _readableError(Object e) =>
-      e is String ? e : e.toString().replaceFirst('Exception: ', '');
 }

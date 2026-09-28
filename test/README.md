@@ -97,22 +97,26 @@ testWidgets('Full app flow', (WidgetTester tester) async {
 1. **Nommage** : Utilisez des noms descriptifs pour les tests
 2. **AAA Pattern** : Arrange, Act, Assert
 3. **Isolation** : Chaque test doit être indépendant
-4. **Mocking** : Mock les services externes (Firebase, API)
+4. **Mocking** : Mock les services externes (Supabase, API)
 5. **Couverture** : Viser 80%+ de couverture de code
 
-## Mocking Firebase (pour les tests)
+## Tester sans Supabase
 
-Pour les tests avec Firebase, utilisez `mockito` ou `fake_cloud_firestore`:
+Les modèles se testent directement avec des lignes au format renvoyé par
+Supabase (voir `unit/supabase_models_test.dart`).
+
+Les repositories acceptent un `SupabaseClient` dans leur constructeur, et
+`AuthProvider` accepte un `UserRepository` : dans un test, passez un client
+pointé vers un faux serveur HTTP, ou une sous-classe de repository qui
+renvoie des données en mémoire.
 
 ```dart
-import 'package:mockito/mockito.dart';
+class FakeGuideRepository extends GuideRepository {
+  FakeGuideRepository() : super(client: SupabaseClient('http://localhost', 'test'));
 
-class MockFirebaseAuth extends Mock implements FirebaseAuth {}
-
-setUp(() {
-  final mockAuth = MockFirebaseAuth();
-  // Configurer les mocks...
-});
+  @override
+  Stream<List<RecyclingGuideItem>> getAllItems() => Stream.value([/* ... */]);
+}
 ```
 
 ## Ressources

@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../home/home_screen.dart';
 import '../auth/login_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 /// Écran de démarrage (Splash Screen)
 /// Affiché pendant 3 secondes au lancement de l'app
 class SplashScreen extends StatefulWidget {
@@ -57,8 +57,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     if (!mounted) return;
     
-    // Vérifier si l'utilisateur est connecté (session restaurée par Firebase)
-    final isAuthenticated = FirebaseAuth.instance.currentUser != null;
+    // Vérifier si l'utilisateur est connecté (session restaurée par Supabase)
+    final isAuthenticated = Supabase.instance.client.auth.currentUser != null;
     
     Widget nextScreen;
     

@@ -215,25 +215,6 @@ class MapProvider extends ChangeNotifier {
     }
   }
 
-  /// Initialise les données des points (pour tests)
-  Future<bool> initializePointsData() async {
-    _setLoadingPoints(true);
-    try {
-      // On appelle la méthode qu'on vient de créer dans le repository
-      final success = await _repository.initializePointsData();
-      
-      if (success) {
-        await loadAllPoints(); // Recharge la liste après l'ajout
-      }
-      return success;
-    } catch (e) {
-      _setError('Erreur lors de l\'initialisation: $e');
-      return false;
-    } finally {
-      _setLoadingPoints(false);
-    }
-  }
-
   // ========== MÉTHODES PRIVÉES ==========
 
   /// Applique le filtre sur la liste complète

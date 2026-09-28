@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/guide_provider.dart';
@@ -7,7 +6,7 @@ import '../../../data/models/recycling_guide_item.dart';
 import '../../../data/models/waste_type.dart';
 import 'guide_detail_screen.dart';
 
-/// Écran du guide de recyclage connecté à Firebase
+/// Écran du guide de recyclage connecté à Supabase
 class GuideScreen extends StatefulWidget {
   const GuideScreen({super.key});
 
@@ -42,27 +41,6 @@ class _GuideScreenState extends State<GuideScreen> {
         title: const Text('Guide de Tri'),
         backgroundColor: const Color(0xFF2D5F4F),
         elevation: 0,
-        actions: [
-          // Bouton pour initialiser les données (debug uniquement : écrit dans Firestore)
-          if (kDebugMode && context.watch<GuideProvider>().totalItemsCount == 0)
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: () async {
-                final provider = context.read<GuideProvider>();
-                final success = await provider.initializeGuideData();
-                if (success && mounted) {
-                  // ignore: use_build_context_synchronously
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Données du guide initialisées !'),
-                      backgroundColor: Color(0xFF66BB6A),
-                    ),
-                  );
-                }
-              },
-              tooltip: 'Initialiser les données',
-            ),
-        ],
       ),
       body: Column(
         children: [
@@ -391,19 +369,6 @@ class _GuideScreenState extends State<GuideScreen> {
             'Essayez une autre recherche',
             style: TextStyle(fontSize: 14, color: Color(0xFFB8C5C0)),
           ),
-          const SizedBox(height: 24),
-          if (kDebugMode && context.watch<GuideProvider>().totalItemsCount == 0)
-            ElevatedButton.icon(
-              onPressed: () async {
-                final provider = context.read<GuideProvider>();
-                await provider.initializeGuideData();
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Ajouter des données'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4A9B7F),
-              ),
-            ),
         ],
       ),
     );
