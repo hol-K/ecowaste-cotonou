@@ -1,5 +1,6 @@
 // lib/presentation/screens/home/home_screen.dart
 
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -47,15 +48,15 @@ class _HomeScreenState extends State<HomeScreen> {
     final index = navigation.current.index;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       body: IndexedStack(index: index, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: index,
         onTap: (i) => navigation.goTo(HomeTab.values[i]),
         type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFF1E4538),
-        selectedItemColor: const Color(0xFF4A9B7F),
-        unselectedItemColor: const Color(0xFFB8C5C0),
+        backgroundColor: AppColors.primaryDark,
+        selectedItemColor: AppColors.accent,
+        unselectedItemColor: AppColors.textSecondary,
         selectedFontSize: 12,
         unselectedFontSize: 12,
         elevation: 8,
@@ -125,7 +126,7 @@ class HomePage extends StatelessWidget {
                           _formatToday(),
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Color(0xFFB8C5C0),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ],
@@ -187,14 +188,14 @@ class HomePage extends StatelessWidget {
   /// Card de la prochaine collecte
   Widget _buildNextCollectionCard(ScheduleProvider schedules) {
     final CollectionSchedule? next = schedules.nextSchedule;
-    final color = next?.wasteType.uiColor ?? const Color(0xFF4A9B7F);
+    final color = next?.wasteType.uiColor ?? AppColors.accent;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF2D5F4F), Color(0xFF234037)],
+          colors: [AppColors.primary, AppColors.surface],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -227,7 +228,7 @@ class HomePage extends StatelessWidget {
                       'Prochaine collecte · ${schedules.currentDistrict}',
                       style: const TextStyle(
                         fontSize: 14,
-                        color: Color(0xFFB8C5C0),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -271,7 +272,7 @@ class HomePage extends StatelessWidget {
                         next.collectionTime,
                         style: const TextStyle(
                           fontSize: 14,
-                          color: Color(0xFFB8C5C0),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -316,25 +317,25 @@ class HomePage extends StatelessWidget {
         _buildQuickActionCard(
           icon: Icons.calendar_today_rounded,
           title: 'Calendrier',
-          color: const Color(0xFF42A5F5),
+          color: AppColors.info,
           onTap: () => navigation.goTo(HomeTab.calendar),
         ),
         _buildQuickActionCard(
           icon: Icons.book_rounded,
           title: 'Guide de Tri',
-          color: const Color(0xFF66BB6A),
+          color: AppColors.success,
           onTap: () => navigation.goTo(HomeTab.guide),
         ),
         _buildQuickActionCard(
           icon: Icons.map_rounded,
           title: 'Points de collecte',
-          color: const Color(0xFFFFA726),
+          color: AppColors.warning,
           onTap: () => navigation.goTo(HomeTab.map),
         ),
         _buildQuickActionCard(
           icon: Icons.emoji_events_outlined,
           title: 'Mon impact',
-          color: const Color(0xFFAB47BC),
+          color: AppColors.wasteElectronic,
           onTap: () => navigation.goTo(HomeTab.profile),
         ),
       ],
@@ -349,7 +350,7 @@ class HomePage extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     return Material(
-      color: const Color(0x14FFFFFF),
+      color: AppColors.cardBackground,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -358,7 +359,7 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
+            border: Border.all(color: AppColors.outline, width: 1),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -396,9 +397,9 @@ class HomePage extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0x14FFFFFF),
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
+        border: Border.all(color: AppColors.outline, width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -407,12 +408,12 @@ class HomePage extends StatelessWidget {
             stats != null ? '${stats.consecutiveDays}' : '—',
             'jours 🔥',
           ),
-          Container(width: 1, height: 40, color: const Color(0xFF4A9B7F)),
+          Container(width: 1, height: 40, color: AppColors.accent),
           _buildStatItem(
             stats != null ? '${kg.format(stats.totalWasteRecycled)} kg' : '—',
             'recyclés',
           ),
-          Container(width: 1, height: 40, color: const Color(0xFF4A9B7F)),
+          Container(width: 1, height: 40, color: AppColors.accent),
           _buildStatItem(
             stats != null ? '${kg.format(stats.co2Avoided)} kg' : '—',
             'CO₂ évités',
@@ -431,13 +432,13 @@ class HomePage extends StatelessWidget {
           style: const TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF4A9B7F),
+            color: AppColors.accent,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Color(0xFFB8C5C0)),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           textAlign: TextAlign.center,
         ),
       ],

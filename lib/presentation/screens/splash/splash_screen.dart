@@ -1,5 +1,6 @@
 // lib/presentation/screens/splash/splash_screen.dart
 
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/onboarding_screen.dart';
@@ -93,8 +94,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF1A3329), // background
-              Color(0xFF2D5F4F), // primary
+              AppColors.background, // background
+              AppColors.primary, // primary
             ],
           ),
         ),
@@ -111,13 +112,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF4A9B7F).withOpacity(0.2),
+                      color: AppColors.accent.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.recycling_rounded,
                       size: 80,
-                      color: Color(0xFF4A9B7F), // accent
+                      color: AppColors.accent, // accent
                     ),
                   ),
                   
@@ -141,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w300,
-                      color: Color(0xFF4A9B7F),
+                      color: AppColors.accent,
                       letterSpacing: 4,
                     ),
                   ),
@@ -153,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     'Triez intelligent, préservez Cotonou',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w300,
                     ),
                     textAlign: TextAlign.center,
@@ -168,7 +169,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF4A9B7F),
+                        AppColors.accent,
                       ),
                     ),
                   ),
@@ -179,7 +180,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     'Chargement...',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

@@ -1,5 +1,7 @@
 // lib/presentation/screens/auth/signup_screen.dart
 
+import 'package:ecowaste_cotonou/core/utils/validators.dart';
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -44,7 +46,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Veuillez accepter les conditions d\'utilisation'),
-          backgroundColor: Color(0xFFEF5350),
+          backgroundColor: AppColors.error,
         ),
       );
       return;
@@ -74,7 +76,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Compte créé avec succès ! 🎉'),
-          backgroundColor: Color(0xFF66BB6A),
+          backgroundColor: AppColors.success,
         ),
       );
     } else if (result == SignUpResult.confirmationRequired) {
@@ -86,7 +88,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           content: Text(
             authProvider.errorMessage ?? 'Erreur lors de l\'inscription',
           ),
-          backgroundColor: const Color(0xFFEF5350),
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -103,7 +105,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         icon: const Icon(
           Icons.mark_email_unread_outlined,
           size: 48,
-          color: Color(0xFF4A9B7F),
+          color: AppColors.accent,
         ),
         title: const Text('Vérifiez votre boîte mail'),
         content: Text(
@@ -151,7 +153,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -179,7 +181,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'Rejoignez EcoWaste et participez à la préservation de Cotonou',
-                  style: TextStyle(fontSize: 16, color: Color(0xFFB8C5C0)),
+                  style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
                 ),
 
                 const SizedBox(height: 32),
@@ -197,30 +199,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'Nom complet',
-                          labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
                           prefixIcon: const Icon(
                             Icons.person_outline,
-                            color: Color(0xFF4A9B7F),
-                          ),
-                          filled: true,
-                          fillColor: const Color(0x1AFFFFFF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4A9B7F),
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF5350),
-                              width: 2,
-                            ),
+                            color: AppColors.accent,
                           ),
                         ),
                         validator: (value) {
@@ -243,71 +224,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
                           prefixIcon: const Icon(
                             Icons.email_outlined,
-                            color: Color(0xFF4A9B7F),
-                          ),
-                          filled: true,
-                          fillColor: const Color(0x1AFFFFFF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4A9B7F),
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF5350),
-                              width: 2,
-                            ),
+                            color: AppColors.accent,
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Veuillez entrer votre email';
-                          }
-                          if (!RegExp(
-                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                          ).hasMatch(value)) {
-                            return 'Email invalide';
-                          }
-                          return null;
-                        },
+                        validator: Validators.email,
                       ),
 
                       const SizedBox(height: 16),
 
                       // Quartier
                       DropdownButtonFormField<String>(
-                        value: _selectedDistrict,
+                        initialValue: _selectedDistrict,
                         style: const TextStyle(color: Colors.white),
-                        dropdownColor: const Color(0xFF234037),
+                        dropdownColor: AppColors.surface,
                         decoration: InputDecoration(
                           labelText: 'Quartier',
-                          labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
                           prefixIcon: const Icon(
                             Icons.location_on_outlined,
-                            color: Color(0xFF4A9B7F),
-                          ),
-                          filled: true,
-                          fillColor: const Color(0x1AFFFFFF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4A9B7F),
-                              width: 2,
-                            ),
+                            color: AppColors.accent,
                           ),
                         ),
                         items: AppStrings.districts.map((district) {
@@ -332,43 +268,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'Mot de passe',
-                          labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
                           prefixIcon: const Icon(
                             Icons.lock_outline,
-                            color: Color(0xFF4A9B7F),
+                            color: AppColors.accent,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_outlined
                                   : Icons.visibility_off_outlined,
-                              color: const Color(0xFFB8C5C0),
+                              color: AppColors.textSecondary,
                             ),
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
                               });
                             },
-                          ),
-                          filled: true,
-                          fillColor: const Color(0x1AFFFFFF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4A9B7F),
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF5350),
-                              width: 2,
-                            ),
                           ),
                         ),
                         validator: (value) {
@@ -391,17 +306,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'Confirmer le mot de passe',
-                          labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
                           prefixIcon: const Icon(
                             Icons.lock_outline,
-                            color: Color(0xFF4A9B7F),
+                            color: AppColors.accent,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscureConfirmPassword
                                   ? Icons.visibility_outlined
                                   : Icons.visibility_off_outlined,
-                              color: const Color(0xFFB8C5C0),
+                              color: AppColors.textSecondary,
                             ),
                             onPressed: () {
                               setState(() {
@@ -409,26 +323,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     !_obscureConfirmPassword;
                               });
                             },
-                          ),
-                          filled: true,
-                          fillColor: const Color(0x1AFFFFFF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4A9B7F),
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF5350),
-                              width: 2,
-                            ),
                           ),
                         ),
                         validator: (value) {
@@ -454,7 +348,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 _acceptTerms = value ?? false;
                               });
                             },
-                            activeColor: const Color(0xFF4A9B7F),
+                            activeColor: AppColors.accent,
                             checkColor: Colors.white,
                           ),
                           Expanded(
@@ -468,7 +362,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 'J\'accepte les conditions d\'utilisation et la politique de confidentialité',
                                 style: TextStyle(
                                   fontSize: 13,
-                                  color: Color(0xFFB8C5C0),
+                                  color: AppColors.textSecondary,
                                 ),
                               ),
                             ),
@@ -489,11 +383,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ? null
                                   : _handleSignUp,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4A9B7F),
+                                backgroundColor: AppColors.accent,
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor: const Color(
                                   0xFF4A9B7F,
-                                ).withOpacity(0.5),
+                                ).withValues(alpha: 0.5),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -533,7 +427,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   children: [
                     const Text(
                       'Vous avez déjà un compte ? ',
-                      style: TextStyle(color: Color(0xFFB8C5C0), fontSize: 14),
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -552,7 +446,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: const Text(
                         'Se connecter',
                         style: TextStyle(
-                          color: Color(0xFF4A9B7F),
+                          color: AppColors.accent,
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                         ),

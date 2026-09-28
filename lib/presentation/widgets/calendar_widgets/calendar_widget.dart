@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../data/models/collection_schedule.dart';
@@ -37,22 +38,22 @@ class CustomCalendarWidget extends StatelessWidget {
       // Styles
       calendarStyle: CalendarStyle(
         defaultTextStyle: const TextStyle(color: Colors.white),
-        weekendTextStyle: const TextStyle(color: Color(0xFFB8C5C0)),
-        outsideTextStyle: const TextStyle(color: Color(0xFF5A6B64)),
+        weekendTextStyle: const TextStyle(color: AppColors.textSecondary),
+        outsideTextStyle: const TextStyle(color: AppColors.textDisabled),
         todayDecoration: BoxDecoration(
-          color: const Color(0xFF4A9B7F).withValues(alpha: 0.3),
+          color: AppColors.accent.withValues(alpha: 0.3),
           shape: BoxShape.circle,
         ),
         selectedDecoration: const BoxDecoration(
-          color: Color(0xFF4A9B7F),
+          color: AppColors.accent,
           shape: BoxShape.circle,
         ),
         markersMaxCount: 3,
       ),
 
       daysOfWeekStyle: const DaysOfWeekStyle(
-        weekdayStyle: TextStyle(color: Color(0xFFB8C5C0)),
-        weekendStyle: TextStyle(color: Color(0xFFB8C5C0)),
+        weekdayStyle: TextStyle(color: AppColors.textSecondary),
+        weekendStyle: TextStyle(color: AppColors.textSecondary),
       ),
 
       // En-tête

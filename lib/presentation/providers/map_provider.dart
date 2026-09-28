@@ -11,7 +11,10 @@ import '../../data/repositories/points_repository.dart';
 
 /// Provider pour gérer l'état de la carte
 class MapProvider extends ChangeNotifier {
-  final PointsRepository _repository = PointsRepository();
+  MapProvider({PointsRepository? repository})
+    : _repository = repository ?? PointsRepository();
+
+  final PointsRepository _repository;
   StreamSubscription<List<CollectionPoint>>? _subscription;
 
   // ========== ÉTAT ==========

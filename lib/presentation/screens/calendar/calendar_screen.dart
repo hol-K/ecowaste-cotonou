@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/collection_schedule.dart';
@@ -25,13 +26,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Consumer<ScheduleProvider>(
           builder: (context, provider, _) =>
               Text('Collectes · ${provider.currentDistrict}'),
         ),
-        backgroundColor: const Color(0xFF2D5F4F),
+        backgroundColor: AppColors.primary,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -80,12 +81,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 64, color: Color(0xFFEF5350)),
+            const Icon(Icons.error_outline, size: 64, color: AppColors.error),
             const SizedBox(height: 16),
             Text(
               provider.errorMessage!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFFB8C5C0)),
+              style: const TextStyle(color: AppColors.textSecondary),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -106,7 +107,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       return const Center(
         child: Text(
           'Aucune collecte prévue ce jour',
-          style: TextStyle(color: Color(0xFFB8C5C0)),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
       );
     }
@@ -158,7 +159,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   const SizedBox(height: 8),
                   Text(
                     schedule.instructions,
-                    style: const TextStyle(color: Color(0xFFB8C5C0), height: 1.4),
+                    style: const TextStyle(color: AppColors.textSecondary, height: 1.4),
                   ),
                 ],
               ],

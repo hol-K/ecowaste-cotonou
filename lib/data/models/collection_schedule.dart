@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'waste_type.dart';
 
 /// Représente un événement de collecte de déchets
@@ -74,18 +75,11 @@ class CollectionSchedule {
 
   /// Formatte la date en français (ex: "Lundi 22 janvier")
   String getFormattedDate() {
-    final weekdays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-    final months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 
-                    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-    
-    final weekday = weekdays[collectionDate.weekday - 1];
-    final day = collectionDate.day;
-    final month = months[collectionDate.month - 1];
-    
-    return '$weekday $day $month';
+    final text = DateFormat('EEEE d MMMM', 'fr_FR').format(collectionDate);
+    return text[0].toUpperCase() + text.substring(1);
   }
 
-  //SÉRIALISATION FIRESTORE
+  //SÉRIALISATION SUPABASE
 
   /// Conversion depuis une ligne Supabase (table collection_schedules)
   factory CollectionSchedule.fromMap(Map<String, dynamic> map) {

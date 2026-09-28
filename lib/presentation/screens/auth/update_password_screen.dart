@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -39,8 +40,8 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
               : authProvider.errorMessage ?? 'Échec de la mise à jour',
         ),
         backgroundColor: success
-            ? const Color(0xFF66BB6A)
-            : const Color(0xFFEF5350),
+            ? AppColors.success
+            : AppColors.error,
       ),
     );
     // En cas de succès, MyApp retire cet écran et l'app reprend son cours.
@@ -49,11 +50,11 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
   InputDecoration _decoration(String label) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF4A9B7F)),
+      prefixIcon: const Icon(Icons.lock_outline, color: AppColors.accent),
       suffixIcon: IconButton(
         icon: Icon(
           _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-          color: const Color(0xFFB8C5C0),
+          color: AppColors.textSecondary,
         ),
         onPressed: () => setState(() => _obscure = !_obscure),
       ),
@@ -65,7 +66,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
     final isLoading = context.watch<AuthProvider>().isLoading;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -78,7 +79,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 const Icon(
                   Icons.lock_reset_rounded,
                   size: 72,
-                  color: Color(0xFF4A9B7F),
+                  color: AppColors.accent,
                 ),
                 const SizedBox(height: 24),
                 const Text(
@@ -94,7 +95,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
                 const Text(
                   'Choisissez le mot de passe que vous utiliserez désormais.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Color(0xFFB8C5C0)),
+                  style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(

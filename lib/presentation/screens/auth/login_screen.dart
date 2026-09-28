@@ -1,3 +1,5 @@
+import 'package:ecowaste_cotonou/core/utils/validators.dart';
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -54,7 +56,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Erreur de connexion'),
-          backgroundColor: const Color(0xFFEF5350),
+          backgroundColor: AppColors.error,
         ),
       );
     }
@@ -63,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -80,13 +82,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(20),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A9B7F).withOpacity(0.2),
+                          color: AppColors.accent.withValues(alpha: 0.2),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(
                           Icons.recycling_rounded,
                           size: 60,
-                          color: Color(0xFF4A9B7F),
+                          color: AppColors.accent,
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -103,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         'Connectez-vous à votre compte',
                         style: TextStyle(
                           fontSize: 16,
-                          color: Color(0xFFB8C5C0),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -124,41 +126,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
                           prefixIcon: const Icon(
                             Icons.email_outlined,
-                            color: Color(0xFF4A9B7F),
-                          ),
-                          filled: true,
-                          fillColor: const Color(0x1AFFFFFF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4A9B7F),
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF5350),
-                              width: 2,
-                            ),
+                            color: AppColors.accent,
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Veuillez entrer votre email';
-                          }
-                          if (!value.contains('@')) {
-                            return 'Email invalide';
-                          }
-                          return null;
-                        },
+                        validator: Validators.email,
                       ),
 
                       const SizedBox(height: 16),
@@ -170,43 +143,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
                           labelText: 'Mot de passe',
-                          labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
                           prefixIcon: const Icon(
                             Icons.lock_outline,
-                            color: Color(0xFF4A9B7F),
+                            color: AppColors.accent,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_outlined
                                   : Icons.visibility_off_outlined,
-                              color: const Color(0xFFB8C5C0),
+                              color: AppColors.textSecondary,
                             ),
                             onPressed: () {
                               setState(() {
                                 _obscurePassword = !_obscurePassword;
                               });
                             },
-                          ),
-                          filled: true,
-                          fillColor: const Color(0x1AFFFFFF),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide.none,
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF4A9B7F),
-                              width: 2,
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFEF5350),
-                              width: 2,
-                            ),
                           ),
                         ),
                         validator: (value) {
@@ -237,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: const Text(
                             'Mot de passe oublié ?',
                             style: TextStyle(
-                              color: Color(0xFF4A9B7F),
+                              color: AppColors.accent,
                               fontSize: 14,
                             ),
                           ),
@@ -255,9 +207,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: ElevatedButton(
                               onPressed: authProvider.isLoading ? null : _handleLogin,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4A9B7F),
+                                backgroundColor: AppColors.accent,
                                 foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(0xFF4A9B7F).withOpacity(0.5),
+                                disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.5),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -296,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(
                       child: Container(
                         height: 1,
-                        color: const Color(0xFF5A6B64),
+                        color: AppColors.textDisabled,
                       ),
                     ),
                     const Padding(
@@ -304,7 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'OU',
                         style: TextStyle(
-                          color: Color(0xFFB8C5C0),
+                          color: AppColors.textSecondary,
                           fontSize: 14,
                         ),
                       ),
@@ -312,7 +264,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Expanded(
                       child: Container(
                         height: 1,
-                        color: const Color(0xFF5A6B64),
+                        color: AppColors.textDisabled,
                       ),
                     ),
                   ],
@@ -331,9 +283,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     );
                   },
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF4A9B7F),
+                    foregroundColor: AppColors.accent,
                     side: const BorderSide(
-                      color: Color(0xFF4A9B7F),
+                      color: AppColors.accent,
                       width: 2,
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -358,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: const Text(
                     'Continuer sans compte',
                     style: TextStyle(
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                       fontSize: 14,
                     ),
                   ),

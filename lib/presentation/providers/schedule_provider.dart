@@ -7,7 +7,10 @@ import '../../data/models/collection_schedule.dart';
 /// Provider du calendrier de collecte : collectes du mois affiché,
 /// jour sélectionné et prochaine collecte du quartier de l'utilisateur.
 class ScheduleProvider with ChangeNotifier {
-  final ScheduleRepository _repository = ScheduleRepository();
+  ScheduleProvider({ScheduleRepository? repository})
+    : _repository = repository ?? ScheduleRepository();
+
+  final ScheduleRepository _repository;
 
   List<CollectionSchedule> _schedules = [];
   CollectionSchedule? _nextSchedule;

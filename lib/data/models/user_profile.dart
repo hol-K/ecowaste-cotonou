@@ -1,3 +1,4 @@
+import '../../core/utils/validators.dart';
 import 'user_statistics.dart';
 import 'notification_settings.dart';
 
@@ -136,11 +137,7 @@ class UserProfile {
       ];
 
   /// Valide le format de l'email
-  bool get hasValidEmail {
-    if (email == null) return false;
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    return emailRegex.hasMatch(email!);
-  }
+  bool get hasValidEmail => email != null && Validators.isValidEmail(email!);
 
   /// Valide le format du téléphone (Bénin)
   bool get hasValidPhone {

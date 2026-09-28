@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -28,7 +29,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Paramètres sauvegardés'),
-            backgroundColor: Color(0xFF66BB6A),
+            backgroundColor: AppColors.success,
           ),
         );
       }
@@ -38,10 +39,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: const Color(0xFF2D5F4F),
+        backgroundColor: AppColors.primary,
         elevation: 0,
       ),
       body: Consumer<AuthProvider>(
@@ -82,9 +83,9 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         settings.enabled
                             ? 'Les notifications sont activées'
                             : 'Activez pour recevoir des rappels',
-                        style: const TextStyle(color: Color(0xFFB8C5C0), fontSize: 13),
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                       ),
-                      activeColor: const Color(0xFF4A9B7F),
+                      activeThumbColor: AppColors.accent,
                     ),
                   ],
                 ),
@@ -97,14 +98,14 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     title: 'Horaires des rappels',
                     children: [
                       ListTile(
-                        leading: const Icon(Icons.access_time, color: Color(0xFF4A9B7F)),
+                        leading: const Icon(Icons.access_time, color: AppColors.accent),
                         title: const Text(
                           'Rappel la veille',
                           style: TextStyle(color: Colors.white),
                         ),
                         subtitle: Text(
                           settings.formatTimeForDisplay(settings.reminderDayBeforeTime),
-                          style: const TextStyle(color: Color(0xFFB8C5C0)),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                         trailing: Switch(
                           value: settings.dayBeforeEnabled,
@@ -113,7 +114,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                             final newProfile = profile.updateNotificationSettings(newSettings);
                             authProvider.updateProfile(newProfile);
                           },
-                          activeColor: const Color(0xFF4A9B7F),
+                          activeThumbColor: AppColors.accent,
                         ),
                         onTap: () => _selectTime(
                           context,
@@ -125,16 +126,16 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                           },
                         ),
                       ),
-                      const Divider(color: Color(0x1AFFFFFF), height: 1),
+                      const Divider(color: AppColors.outline, height: 1),
                       ListTile(
-                        leading: const Icon(Icons.access_time, color: Color(0xFF4A9B7F)),
+                        leading: const Icon(Icons.access_time, color: AppColors.accent),
                         title: const Text(
                           'Rappel le jour de collecte',
                           style: TextStyle(color: Colors.white),
                         ),
                         subtitle: Text(
                           settings.formatTimeForDisplay(settings.reminderDayOfTime),
-                          style: const TextStyle(color: Color(0xFFB8C5C0)),
+                          style: const TextStyle(color: AppColors.textSecondary),
                         ),
                         trailing: Switch(
                           value: settings.dayOfEnabled,
@@ -143,7 +144,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                             final newProfile = profile.updateNotificationSettings(newSettings);
                             authProvider.updateProfile(newProfile);
                           },
-                          activeColor: const Color(0xFF4A9B7F),
+                          activeThumbColor: AppColors.accent,
                         ),
                         onTap: () => _selectTime(
                           context,
@@ -189,7 +190,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                             ),
                           ],
                         ),
-                        activeColor: const Color(0xFF4A9B7F),
+                        activeThumbColor: AppColors.accent,
                       );
                     }).toList(),
                   ),
@@ -213,12 +214,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         ),
                         subtitle: const Text(
                           'Émettre un son lors des notifications',
-                          style: TextStyle(color: Color(0xFFB8C5C0), fontSize: 13),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                         ),
-                        secondary: const Icon(Icons.volume_up, color: Color(0xFF4A9B7F)),
-                        activeColor: const Color(0xFF4A9B7F),
+                        secondary: const Icon(Icons.volume_up, color: AppColors.accent),
+                        activeThumbColor: AppColors.accent,
                       ),
-                      const Divider(color: Color(0x1AFFFFFF), height: 1),
+                      const Divider(color: AppColors.outline, height: 1),
                       SwitchListTile(
                         value: settings.vibrationEnabled,
                         onChanged: (value) {
@@ -232,10 +233,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                         ),
                         subtitle: const Text(
                           'Faire vibrer le téléphone',
-                          style: TextStyle(color: Color(0xFFB8C5C0), fontSize: 13),
+                          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
                         ),
-                        secondary: const Icon(Icons.vibration, color: Color(0xFF4A9B7F)),
-                        activeColor: const Color(0xFF4A9B7F),
+                        secondary: const Icon(Icons.vibration, color: AppColors.accent),
+                        activeThumbColor: AppColors.accent,
                       ),
                     ],
                   ),
@@ -252,8 +253,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _saveSettings,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A9B7F),
-                        disabledBackgroundColor: const Color(0xFF4A9B7F).withOpacity(0.5),
+                        backgroundColor: AppColors.accent,
+                        disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.5),
                       ),
                       child: _isLoading
                           ? const SizedBox(
@@ -289,10 +290,10 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0x14FFFFFF),
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0x1AFFFFFF),
+          color: AppColors.outline,
           width: 1,
         ),
       ),
@@ -318,7 +319,7 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                     subtitle,
                     style: const TextStyle(
                       fontSize: 13,
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -349,8 +350,8 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         return Theme(
           data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(
-              primary: Color(0xFF4A9B7F),
-              surface: Color(0xFF234037),
+              primary: AppColors.accent,
+              surface: AppColors.surface,
             ),
           ),
           child: child!,

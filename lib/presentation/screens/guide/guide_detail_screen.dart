@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../data/models/recycling_guide_item.dart';
@@ -17,14 +18,14 @@ class GuideDetailScreen extends StatelessWidget {
     final color = item.wasteType.uiColor;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       body: CustomScrollView(
         slivers: [
           // AppBar avec icône
           SliverAppBar(
             expandedHeight: 250,
             pinned: true,
-            backgroundColor: const Color(0xFF2D5F4F),
+            backgroundColor: AppColors.primary,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
@@ -33,7 +34,7 @@ class GuideDetailScreen extends StatelessWidget {
                     end: Alignment.bottomCenter,
                     colors: [
                       color.withValues(alpha: 0.3),
-                      const Color(0xFF2D5F4F),
+                      AppColors.primary,
                     ],
                   ),
                 ),
@@ -92,7 +93,7 @@ class GuideDetailScreen extends StatelessWidget {
                       item.description,
                       style: const TextStyle(
                         fontSize: 15,
-                        color: Color(0xFFB8C5C0),
+                        color: AppColors.textSecondary,
                         height: 1.5,
                       ),
                     ),
@@ -157,7 +158,7 @@ class GuideDetailScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF66BB6A).withValues(alpha: 0.2),
+                          color: AppColors.success.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -165,7 +166,7 @@ class GuideDetailScreen extends StatelessWidget {
                           children: [
                             const Icon(
                               Icons.energy_savings_leaf,
-                              color: Color(0xFF66BB6A),
+                              color: AppColors.success,
                               size: 24,
                             ),
                             const SizedBox(width: 12),
@@ -214,7 +215,7 @@ class GuideDetailScreen extends StatelessWidget {
                       icon: const Icon(Icons.map),
                       label: const Text('Trouver un point de collecte'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF4A9B7F),
+                        backgroundColor: AppColors.accent,
                         foregroundColor: Colors.white,
                       ),
                     ),
@@ -241,7 +242,7 @@ class GuideDetailScreen extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(icon, color: const Color(0xFF4A9B7F), size: 24),
+            Icon(icon, color: AppColors.accent, size: 24),
             const SizedBox(width: 8),
             Text(
               title,
@@ -272,7 +273,7 @@ class GuideDetailScreen extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: const BoxDecoration(
-                  color: Color(0xFF4A9B7F),
+                  color: AppColors.accent,
                   shape: BoxShape.circle,
                 ),
                 child: Center(
@@ -292,7 +293,7 @@ class GuideDetailScreen extends StatelessWidget {
                   entry.value,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFFB8C5C0),
+                    color: AppColors.textSecondary,
                     height: 1.5,
                   ),
                 ),
@@ -315,7 +316,7 @@ class GuideDetailScreen extends StatelessWidget {
             children: [
               const Icon(
                 Icons.check_circle,
-                color: Color(0xFF66BB6A),
+                color: AppColors.success,
                 size: 20,
               ),
               const SizedBox(width: 8),
@@ -324,7 +325,7 @@ class GuideDetailScreen extends StatelessWidget {
                   alternative,
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Color(0xFFB8C5C0),
+                    color: AppColors.textSecondary,
                     height: 1.5,
                   ),
                 ),

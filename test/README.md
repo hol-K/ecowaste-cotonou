@@ -6,13 +6,15 @@ Ce répertoire contient les tests unitaires, de widget et d'intégration pour l'
 
 ```
 test/
-├── widget_test.dart          # Tests de base Material App
+├── helpers/
+│   └── fakes.dart                        # Repositories en mémoire (sans Supabase)
 ├── unit/
-│   └── example_test.dart     # Tests unitaires (logique métier)
-├── widget/
-│   └── material_widgets_test.dart  # Tests des widgets Flutter
-└── integration/
-    └── user_flow_test.dart   # Tests d'intégration (flux utilisateur)
+│   ├── recycling_guide_item_test.dart    # Conversion du guide (enums Postgres)
+│   ├── supabase_models_test.dart         # Conversion plannings / points / profils
+│   ├── notification_reminders_test.dart  # Calcul des rappels de collecte
+│   └── providers_test.dart               # Guide, calendrier, carte
+└── widget/
+    └── guide_screen_test.dart            # Écran du guide : filtres, recherche, fiche
 ```
 
 ## Exécution des tests
@@ -32,14 +34,9 @@ flutter test test/unit
 flutter test test/widget
 ```
 
-### Tests d'intégration uniquement
-```bash
-flutter test test/integration
-```
-
 ### Test spécifique
 ```bash
-flutter test test/unit/example_test.dart
+flutter test test/unit/providers_test.dart
 ```
 
 ### Avec couverture de code

@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../auth/login_screen.dart';
@@ -21,19 +22,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       icon: Icons.recycling_rounded,
       title: 'Triez intelligemment',
       description: 'Découvrez dans quelle poubelle jeter chaque type de déchet grâce à notre guide interactif',
-      color: const Color(0xFF4A9B7F),
+      color: AppColors.accent,
     ),
     OnboardingPage(
       icon: Icons.notifications_active_rounded,
       title: 'Ne manquez plus une collecte',
       description: 'Recevez des rappels personnalisés avant chaque passage des camions de collecte',
-      color: const Color(0xFF42A5F5),
+      color: AppColors.info,
     ),
     OnboardingPage(
       icon: Icons.map_rounded,
       title: 'Localisez les déchetteries',
       description: 'Trouvez facilement les points de collecte près de chez vous pour tous types de déchets',
-      color: const Color(0xFF66BB6A),
+      color: AppColors.success,
     ),
   ];
 
@@ -81,7 +82,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -95,7 +96,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: const Text(
                     'Passer',
                     style: TextStyle(
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                       fontSize: 16,
                     ),
                   ),
@@ -140,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _nextPage,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A9B7F),
+                    backgroundColor: AppColors.accent,
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
@@ -177,7 +178,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: 160,
             height: 160,
             decoration: BoxDecoration(
-              color: page.color.withOpacity(0.15),
+              color: page.color.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -207,7 +208,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             page.description,
             style: const TextStyle(
               fontSize: 16,
-              color: Color(0xFFB8C5C0),
+              color: AppColors.textSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -225,8 +226,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       height: 8,
       decoration: BoxDecoration(
         color: _currentPage == index 
-            ? const Color(0xFF4A9B7F) 
-            : const Color(0xFF5A6B64),
+            ? AppColors.accent 
+            : AppColors.textDisabled,
         borderRadius: BorderRadius.circular(4),
       ),
     );

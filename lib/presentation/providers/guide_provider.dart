@@ -9,7 +9,10 @@ import '../../data/repositories/guide_repository.dart';
 
 /// Provider pour gérer l'état du guide de recyclage
 class GuideProvider extends ChangeNotifier {
-  final GuideRepository _repository = GuideRepository();
+  GuideProvider({GuideRepository? repository})
+    : _repository = repository ?? GuideRepository();
+
+  final GuideRepository _repository;
   StreamSubscription<List<RecyclingGuideItem>>? _subscription;
 
   // ========== ÉTAT ==========
@@ -103,7 +106,7 @@ class GuideProvider extends ChangeNotifier {
     try {
       await _repository.incrementViewCount(id);
     } catch (e) {
-      print('Erreur lors de l\'incrémentation: $e');
+      debugPrint('Erreur lors de l\'incrémentation: $e');
     }
   }
 
@@ -112,7 +115,7 @@ class GuideProvider extends ChangeNotifier {
     try {
       return await _repository.getItemsCountByCategory();
     } catch (e) {
-      print('Erreur lors du comptage: $e');
+      debugPrint('Erreur lors du comptage: $e');
       return {};
     }
   }

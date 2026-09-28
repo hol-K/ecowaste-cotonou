@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -71,7 +72,7 @@ class _MapScreenState extends State<MapScreen> {
     if (point.acceptedWasteTypes.isEmpty ||
         point.acceptedWasteTypes.length > 3 ||
         point.acceptsWasteType(WasteType.general)) {
-      return const Color(0xFF4A9B7F);
+      return AppColors.accent;
     }
     return point.acceptedWasteTypes.first.uiColor;
   }
@@ -84,10 +85,10 @@ class _MapScreenState extends State<MapScreen> {
     final points = provider.getPointsSortedByDistance();
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Points de Collecte'),
-        backgroundColor: const Color(0xFF2D5F4F),
+        backgroundColor: AppColors.primary,
         elevation: 0,
       ),
       body: Stack(
@@ -103,7 +104,7 @@ class _MapScreenState extends State<MapScreen> {
             children: [
               TileLayer(
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.ecowaste_cotonou',
+                userAgentPackageName: 'bj.ecowaste.cotonou',
                 tileBuilder: _darkModeTileBuilder,
               ),
 
@@ -151,7 +152,7 @@ class _MapScreenState extends State<MapScreen> {
                       height: 50,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A9B7F).withValues(alpha: 0.3),
+                          color: AppColors.accent.withValues(alpha: 0.3),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
@@ -159,7 +160,7 @@ class _MapScreenState extends State<MapScreen> {
                             width: 20,
                             height: 20,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF4A9B7F),
+                              color: AppColors.accent,
                               shape: BoxShape.circle,
                               border: Border.all(color: Colors.white, width: 3),
                             ),
@@ -182,9 +183,9 @@ class _MapScreenState extends State<MapScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A3329).withValues(alpha: 0.9),
+                color: AppColors.background.withValues(alpha: 0.9),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF4A9B7F), width: 2),
+                border: Border.all(color: AppColors.accent, width: 2),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -198,7 +199,7 @@ class _MapScreenState extends State<MapScreen> {
                   else
                     const Icon(
                       Icons.location_on,
-                      color: Color(0xFF4A9B7F),
+                      color: AppColors.accent,
                       size: 18,
                     ),
                   const SizedBox(width: 6),
@@ -222,7 +223,7 @@ class _MapScreenState extends State<MapScreen> {
           FloatingActionButton(
             heroTag: 'my_location',
             onPressed: _centerOnUserLocation,
-            backgroundColor: const Color(0xFF4A9B7F),
+            backgroundColor: AppColors.accent,
             child: provider.isLoadingLocation
                 ? const SizedBox(
                     width: 24,
@@ -238,7 +239,7 @@ class _MapScreenState extends State<MapScreen> {
           FloatingActionButton(
             heroTag: 'list',
             onPressed: _showPointsList,
-            backgroundColor: const Color(0xFF2D5F4F),
+            backgroundColor: AppColors.primary,
             child: const Icon(Icons.list),
           ),
         ],
@@ -270,7 +271,7 @@ class _MapScreenState extends State<MapScreen> {
     return Container(
       height: 60,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      color: const Color(0xFF2D5F4F).withValues(alpha: 0.95),
+      color: AppColors.primary.withValues(alpha: 0.95),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -285,10 +286,10 @@ class _MapScreenState extends State<MapScreen> {
               label: Text(filter?.displayName ?? 'Tous'),
               selected: isSelected,
               onSelected: (_) => provider.filterByWasteType(filter),
-              backgroundColor: const Color(0xFF234037),
-              selectedColor: const Color(0xFF4A9B7F),
+              backgroundColor: AppColors.surface,
+              selectedColor: AppColors.accent,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFFB8C5C0),
+                color: isSelected ? Colors.white : AppColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
               checkmarkColor: Colors.white,
@@ -306,7 +307,7 @@ class _MapScreenState extends State<MapScreen> {
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -320,7 +321,7 @@ class _MapScreenState extends State<MapScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB8C5C0),
+                  color: AppColors.textSecondary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -340,7 +341,7 @@ class _MapScreenState extends State<MapScreen> {
                   ? const Center(
                       child: Text(
                         'Aucun point pour ce filtre',
-                        style: TextStyle(color: Color(0xFFB8C5C0)),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     )
                   : ListView.builder(
@@ -373,7 +374,7 @@ class _MapScreenState extends State<MapScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0x14FFFFFF),
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
         ),
@@ -407,13 +408,13 @@ class _MapScreenState extends State<MapScreen> {
                         : point.address,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFFB8C5C0)),
+            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
           ],
         ),
       ),
@@ -432,7 +433,7 @@ class _MapScreenState extends State<MapScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF234037),
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -448,7 +449,7 @@ class _MapScreenState extends State<MapScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB8C5C0),
+                    color: AppColors.textSecondary,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -468,7 +469,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(height: 8),
                 Text(
                   point.description!,
-                  style: const TextStyle(color: Color(0xFFB8C5C0)),
+                  style: const TextStyle(color: AppColors.textSecondary),
                 ),
               ],
 
@@ -553,7 +554,7 @@ class _MapScreenState extends State<MapScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: const Color(0xFF4A9B7F), size: 20),
+        Icon(icon, color: AppColors.accent, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -571,7 +572,7 @@ class _MapScreenState extends State<MapScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subText,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFFB8C5C0)),
+                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
                 ),
               ],
             ],
