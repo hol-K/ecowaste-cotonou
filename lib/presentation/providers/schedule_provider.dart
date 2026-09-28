@@ -4,48 +4,68 @@ import 'package:flutter/foundation.dart';
 import '../../data/repositories/schedule_repository.dart';
 import '../../data/models/collection_schedule.dart';
 
-/// Provider pour gérer l'état du calendrier de collecte
+/// Provider du calendrier de collecte : collectes du mois affiché,
+/// jour sélectionné et prochaine collecte du quartier de l'utilisateur.
 class ScheduleProvider with ChangeNotifier {
-  final ScheduleRepository _repository = ScheduleRepository();
+  ScheduleProvider({ScheduleRepository? repository})
+    : _repository = repository ?? ScheduleRepository();
+
+  final ScheduleRepository _repository;
 
   List<CollectionSchedule> _schedules = [];
   CollectionSchedule? _nextSchedule;
   DateTime _selectedMonth = DateTime.now();
+  DateTime _selectedDay = DateTime.now();
   String _currentDistrict = 'Akpakpa';
   bool _isLoading = false;
+  bool _initialized = false;
   String? _errorMessage;
 
   // Getters
   List<CollectionSchedule> get schedules => _schedules;
   CollectionSchedule? get nextSchedule => _nextSchedule;
   DateTime get selectedMonth => _selectedMonth;
+  DateTime get selectedDay => _selectedDay;
   String get currentDistrict => _currentDistrict;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
+  /// Charge les données une seule fois (appelé par les écrans au montage)
+  Future<void> ensureLoaded() async {
+    if (_initialized) return;
+    _initialized = true;
+    await refresh();
+  }
+
+  /// Synchronise le quartier avec le profil utilisateur.
+  /// Appelé depuis un ProxyProvider pendant un build : le rechargement est
+  /// donc différé pour ne pas notifier les listeners en plein build.
+  void syncDistrict(String? district) {
+    if (district == null || district == _currentDistrict) return;
+    _currentDistrict = district;
+    if (_initialized) Future.microtask(refresh);
+  }
+
   /// Change le quartier et recharge les données
   Future<void> setDistrict(String district) async {
     _currentDistrict = district;
-    await loadSchedules();
-    await loadNextSchedule();
+    await refresh();
   }
 
-  /// Change le mois sélectionné et recharge
+  /// Change le mois affiché et recharge
   Future<void> setMonth(DateTime month) async {
+    if (month.year == _selectedMonth.year &&
+        month.month == _selectedMonth.month) {
+      return;
+    }
     _selectedMonth = month;
     await loadSchedules();
   }
 
-  /// Change au mois suivant
-  Future<void> nextMonth() async {
-    final newMonth = DateTime(_selectedMonth.year, _selectedMonth.month + 1);
-    await setMonth(newMonth);
-  }
-
-  /// Change au mois précédent
-  Future<void> previousMonth() async {
-    final newMonth = DateTime(_selectedMonth.year, _selectedMonth.month - 1);
-    await setMonth(newMonth);
+  /// Sélectionne un jour du calendrier
+  void selectDay(DateTime day) {
+    _selectedDay = day;
+    notifyListeners();
   }
 
   /// Charge les collectes du mois
@@ -63,7 +83,6 @@ class ScheduleProvider with ChangeNotifier {
     } catch (e) {
       _errorMessage = e.toString();
       _setLoading(false);
-      notifyListeners();
     }
   }
 
@@ -79,37 +98,18 @@ class ScheduleProvider with ChangeNotifier {
     }
   }
 
-  /// Charge les prochaines collectes (pour le dashboard)
-  Future<List<CollectionSchedule>> getUpcomingSchedules({int limit = 5}) async {
-    try {
-      return await _repository.getUpcomingSchedules(
-        district: _currentDistrict,
-        limit: limit,
-      );
-    } catch (e) {
-      debugPrint('Erreur chargement collectes à venir: $e');
-      return [];
-    }
-  }
-
   /// Obtient les collectes d'une date spécifique
   List<CollectionSchedule> getSchedulesForDate(DateTime date) {
     return _schedules.where((schedule) {
       return schedule.collectionDate.year == date.year &&
-             schedule.collectionDate.month == date.month &&
-             schedule.collectionDate.day == date.day;
+          schedule.collectionDate.month == date.month &&
+          schedule.collectionDate.day == date.day;
     }).toList();
-  }
-
-  /// Vérifie si une date a des collectes
-  bool hasScheduleOnDate(DateTime date) {
-    return getSchedulesForDate(date).isNotEmpty;
   }
 
   /// Rafraîchit toutes les données
   Future<void> refresh() async {
-    await loadSchedules();
-    await loadNextSchedule();
+    await Future.wait([loadSchedules(), loadNextSchedule()]);
   }
 
   /// Efface le message d'erreur

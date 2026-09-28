@@ -1,3 +1,4 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -51,28 +52,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         district: _selectedDistrict,
       );
 
-      await authProvider.updateProfile(updatedProfile);
+      final success = await authProvider.updateProfile(updatedProfile);
 
-      if (mounted) {
-        setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+
+      if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profil mis à jour avec succès'),
-            backgroundColor: Color(0xFF66BB6A),
+            backgroundColor: AppColors.success,
           ),
         );
         Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Échec de la mise à jour'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
+    } else {
+      setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Modifier le profil'),
-        backgroundColor: const Color(0xFF2D5F4F),
+        backgroundColor: AppColors.primary,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -92,7 +104,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           final profile = authProvider.userProfile;
                           return CircleAvatar(
                             radius: 60,
-                            backgroundColor: const Color(0xFF4A9B7F),
+                            backgroundColor: AppColors.accent,
                             child: profile?.photoUrl != null
                                 ? ClipOval(
                                     child: Image.network(
@@ -119,7 +131,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: const BoxDecoration(
-                            color: Color(0xFF4A9B7F),
+                            color: AppColors.accent,
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
@@ -141,18 +153,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Nom complet',
-                    labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
-                    prefixIcon: const Icon(Icons.person_outline, color: Color(0xFF4A9B7F)),
-                    filled: true,
-                    fillColor: const Color(0x1AFFFFFF),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF4A9B7F), width: 2),
-                    ),
+                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.accent),
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -170,19 +171,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     return TextFormField(
                       initialValue: authProvider.user?.email ?? '',
                       enabled: false,
-                      style: const TextStyle(color: Color(0xFF5A6B64)),
+                      style: const TextStyle(color: AppColors.textDisabled),
                       decoration: InputDecoration(
                         labelText: 'Email',
-                        labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
-                        prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF5A6B64)),
+                        prefixIcon: const Icon(Icons.email_outlined, color: AppColors.textDisabled),
                         filled: true,
                         fillColor: const Color(0x0AFFFFFF),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
                         helperText: 'L\'email ne peut pas être modifié',
-                        helperStyle: const TextStyle(color: Color(0xFF5A6B64), fontSize: 12),
+                        helperStyle: const TextStyle(color: AppColors.textDisabled, fontSize: 12),
                       ),
                     );
                   },
@@ -197,18 +193,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Téléphone (optionnel)',
-                    labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
-                    prefixIcon: const Icon(Icons.phone_outlined, color: Color(0xFF4A9B7F)),
-                    filled: true,
-                    fillColor: const Color(0x1AFFFFFF),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF4A9B7F), width: 2),
-                    ),
+                    prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.accent),
                   ),
                 ),
 
@@ -216,23 +201,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                 // Quartier
                 DropdownButtonFormField<String>(
-                  value: _selectedDistrict,
+                  initialValue: _selectedDistrict,
                   style: const TextStyle(color: Colors.white),
-                  dropdownColor: const Color(0xFF234037),
+                  dropdownColor: AppColors.surface,
                   decoration: InputDecoration(
                     labelText: 'Quartier',
-                    labelStyle: const TextStyle(color: Color(0xFFB8C5C0)),
-                    prefixIcon: const Icon(Icons.location_on_outlined, color: Color(0xFF4A9B7F)),
-                    filled: true,
-                    fillColor: const Color(0x1AFFFFFF),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFF4A9B7F), width: 2),
-                    ),
+                    prefixIcon: const Icon(Icons.location_on_outlined, color: AppColors.accent),
                   ),
                   items: AppStrings.districts.map((district) {
                     return DropdownMenuItem(
@@ -255,8 +229,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A9B7F),
-                      disabledBackgroundColor: const Color(0xFF4A9B7F).withOpacity(0.5),
+                      backgroundColor: AppColors.accent,
+                      disabledBackgroundColor: AppColors.accent.withValues(alpha: 0.5),
                     ),
                     child: _isLoading
                         ? const SizedBox(

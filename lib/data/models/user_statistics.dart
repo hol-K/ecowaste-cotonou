@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 /// Statistiques d'engagement de l'utilisateur
 class UserStatistics {
   final int consecutiveDays;          // Jours consécutifs d'utilisation
@@ -63,8 +61,8 @@ class UserStatistics {
     
     int newConsecutive;
     if (daysDiff == 0) {
-      // Même jour, on garde le compteur
-      newConsecutive = consecutiveDays;
+      // Même jour, on garde le compteur (au moins 1 : le jour en cours compte)
+      newConsecutive = consecutiveDays < 1 ? 1 : consecutiveDays;
     } else if (daysDiff == 1) {
       // Jour suivant, on incrémente
       newConsecutive = consecutiveDays + 1;
@@ -184,7 +182,7 @@ class UserStatistics {
 
   //SÉRIALISATION FIRESTORE 
 
-  /// Conversion depuis Map (Firestore → Dart)
+  /// Conversion depuis Map (base de données → Dart)
   factory UserStatistics.fromMap(Map<String, dynamic> map) {
     return UserStatistics(
       consecutiveDays: map['consecutiveDays'] ?? 0,
@@ -195,13 +193,13 @@ class UserStatistics {
       mapViews: map['mapViews'] ?? 0,
       points: map['points'] ?? 0,
       badges: List<String>.from(map['badges'] ?? []),
-      lastActive: map['lastActive'] != null
-          ? (map['lastActive'] as Timestamp).toDate()
-          : DateTime.now(),
+      lastActive:
+          DateTime.tryParse(map['lastActive'] ?? '')?.toLocal() ??
+          DateTime.now(),
     );
   }
 
-  /// Conversion vers Map (Dart → Firestore)
+  /// Conversion vers Map (Dart → base de données)
   Map<String, dynamic> toMap() {
     return {
       'consecutiveDays': consecutiveDays,
@@ -212,7 +210,7 @@ class UserStatistics {
       'mapViews': mapViews,
       'points': points,
       'badges': badges,
-      'lastActive': Timestamp.fromDate(lastActive),
+      'lastActive': lastActive.toUtc().toIso8601String(),
     };
   }
 

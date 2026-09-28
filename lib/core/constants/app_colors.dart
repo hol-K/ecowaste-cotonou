@@ -35,6 +35,7 @@ class AppColors {
   // ========== OVERLAYS ==========
   
   static const Color cardBackground = Color(0x14FFFFFF);
+  static const Color outline = Color(0x1AFFFFFF); // bordures, champs, séparateurs
   static const Color hoverOverlay = Color(0x334A9B7F);
   static const Color shadow = Color(0x4D000000);
   

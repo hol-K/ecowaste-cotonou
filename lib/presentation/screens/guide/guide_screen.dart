@@ -1,10 +1,13 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/guide_provider.dart';
+import '../../widgets/waste_visuals.dart';
+import '../../../data/models/recycling_guide_item.dart';
 import '../../../data/models/waste_type.dart';
-import 'package:ecowaste_cotonou/presentation/screens/guide/guide_detail_screen.dart';
+import 'guide_detail_screen.dart';
 
-/// Écran du guide de recyclage connecté à Firebase
+/// Écran du guide de recyclage connecté à Supabase
 class GuideScreen extends StatefulWidget {
   const GuideScreen({super.key});
 
@@ -34,32 +37,11 @@ class _GuideScreenState extends State<GuideScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Guide de Tri'),
-        backgroundColor: const Color(0xFF2D5F4F),
+        backgroundColor: AppColors.primary,
         elevation: 0,
-        actions: [
-          // Bouton pour initialiser les données (en développement)
-          if (context.watch<GuideProvider>().totalItemsCount == 0)
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: () async {
-                final provider = context.read<GuideProvider>();
-                final success = await provider.initializeGuideData();
-                if (success && mounted) {
-                  // ignore: use_build_context_synchronously
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Données du guide initialisées !'),
-                      backgroundColor: Color(0xFF66BB6A),
-                    ),
-                  );
-                }
-              },
-              tooltip: 'Initialiser les données',
-            ),
-        ],
       ),
       body: Column(
         children: [
@@ -102,7 +84,7 @@ class _GuideScreenState extends State<GuideScreen> {
   Widget _buildSearchBar() {
     return Container(
       padding: const EdgeInsets.all(16),
-      color: const Color(0xFF2D5F4F),
+      color: AppColors.primary,
       child: Consumer<GuideProvider>(
         builder: (context, provider, child) {
           return TextField(
@@ -113,11 +95,11 @@ class _GuideScreenState extends State<GuideScreen> {
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'Rechercher un déchet...',
-              hintStyle: const TextStyle(color: Color(0xFFB8C5C0)),
-              prefixIcon: const Icon(Icons.search, color: Color(0xFFB8C5C0)),
+              hintStyle: const TextStyle(color: AppColors.textSecondary),
+              prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, color: Color(0xFFB8C5C0)),
+                      icon: const Icon(Icons.clear, color: AppColors.textSecondary),
                       onPressed: () {
                         _searchController.clear();
                         provider.clearSearch();
@@ -125,7 +107,7 @@ class _GuideScreenState extends State<GuideScreen> {
                     )
                   : null,
               filled: true,
-              fillColor: const Color(0x1AFFFFFF),
+              fillColor: AppColors.outline,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide.none,
@@ -165,10 +147,10 @@ class _GuideScreenState extends State<GuideScreen> {
                   onSelected: (selected) {
                     provider.filterByCategory(category);
                   },
-                  backgroundColor: const Color(0xFF234037),
-                  selectedColor: const Color(0xFF4A9B7F),
+                  backgroundColor: AppColors.surface,
+                  selectedColor: AppColors.accent,
                   labelStyle: TextStyle(
-                    color: isSelected ? Colors.white : const Color(0xFFB8C5C0),
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
                     fontWeight: isSelected
                         ? FontWeight.w600
                         : FontWeight.normal,
@@ -196,50 +178,9 @@ class _GuideScreenState extends State<GuideScreen> {
   }
 
   /// Card d'un item du guide
-  // ignore: strict_top_level_inference
-  Widget _buildItemCard(item) {
-    // Obtenir la couleur selon le type de déchet
-    Color getColor() {
-      switch (item.actualWasteType) {
-        case WasteType.recyclable:
-          return const Color(0xFF42A5F5);
-        case WasteType.glass:
-          return const Color(0xFFFFA726);
-        case WasteType.organic:
-          return const Color(0xFF66BB6A);
-        case WasteType.dangerous:
-          return const Color(0xFFEF5350);
-        case WasteType.electronic:
-          return const Color(0xFFAB47BC);
-        default:
-          return const Color(0xFF4A9B7F);
-      }
-    }
-
-    // Obtenir l'icône selon la catégorie
-    IconData getIcon() {
-      switch (item.category) {
-        case RecyclingCategory.plastic:
-          return Icons.local_drink;
-        case RecyclingCategory.paper:
-          return Icons.article;
-        case RecyclingCategory.glass:
-          return Icons.wine_bar;
-        case RecyclingCategory.metal:
-          return Icons.construction;
-        case RecyclingCategory.organic:
-          return Icons.eco;
-        case RecyclingCategory.dangerous:
-          return Icons.warning_amber_rounded;
-        case RecyclingCategory.electronic:
-          return Icons.phone_android;
-        default:
-          return Icons.recycling;
-      }
-    }
-
-    final color = getColor();
-    final icon = getIcon();
+  Widget _buildItemCard(RecyclingGuideItem item) {
+    final color = item.wasteType.uiColor;
+    final icon = item.category.icon;
 
     return GestureDetector(
       onTap: () {
@@ -258,9 +199,9 @@ class _GuideScreenState extends State<GuideScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0x14FFFFFF),
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
+          border: Border.all(color: AppColors.outline, width: 1),
         ),
         child: Row(
           children: [
@@ -269,7 +210,7 @@ class _GuideScreenState extends State<GuideScreen> {
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 // ignore: deprecated_member_use
-                color: color.withOpacity(0.2),
+                color: color.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 32),
@@ -300,7 +241,7 @@ class _GuideScreenState extends State<GuideScreen> {
                         ),
                         decoration: BoxDecoration(
                           // ignore: deprecated_member_use
-                          color: color.withOpacity(0.2),
+                          color: color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -316,7 +257,7 @@ class _GuideScreenState extends State<GuideScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              item.wasteType,
+                              item.wasteType.displayName,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: color,
@@ -333,7 +274,7 @@ class _GuideScreenState extends State<GuideScreen> {
             ),
 
             // Chevron
-            const Icon(Icons.chevron_right, color: Color(0xFFB8C5C0)),
+            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
           ],
         ),
       ),
@@ -346,11 +287,11 @@ class _GuideScreenState extends State<GuideScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: Color(0xFF4A9B7F)),
+          CircularProgressIndicator(color: AppColors.accent),
           SizedBox(height: 16),
           Text(
             'Chargement du guide...',
-            style: TextStyle(fontSize: 16, color: Color(0xFFB8C5C0)),
+            style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -369,7 +310,7 @@ class _GuideScreenState extends State<GuideScreen> {
               Icons.error_outline,
               size: 80,
               // ignore: deprecated_member_use
-              color: const Color(0xFFEF5350).withOpacity(0.5),
+              color: AppColors.error.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -383,7 +324,7 @@ class _GuideScreenState extends State<GuideScreen> {
             const SizedBox(height: 8),
             Text(
               errorMessage,
-              style: const TextStyle(fontSize: 14, color: Color(0xFFB8C5C0)),
+              style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 24),
@@ -394,7 +335,7 @@ class _GuideScreenState extends State<GuideScreen> {
               icon: const Icon(Icons.refresh),
               label: const Text('Réessayer'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4A9B7F),
+                backgroundColor: AppColors.accent,
               ),
             ),
           ],
@@ -413,7 +354,7 @@ class _GuideScreenState extends State<GuideScreen> {
             Icons.search_off_rounded,
             size: 80,
             // ignore: deprecated_member_use
-            color: const Color(0xFF4A9B7F).withOpacity(0.5),
+            color: AppColors.accent.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -427,21 +368,8 @@ class _GuideScreenState extends State<GuideScreen> {
           const SizedBox(height: 8),
           const Text(
             'Essayez une autre recherche',
-            style: TextStyle(fontSize: 14, color: Color(0xFFB8C5C0)),
+            style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 24),
-          if (context.watch<GuideProvider>().totalItemsCount == 0)
-            ElevatedButton.icon(
-              onPressed: () async {
-                final provider = context.read<GuideProvider>();
-                await provider.initializeGuideData();
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Ajouter des données'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4A9B7F),
-              ),
-            ),
         ],
       ),
     );

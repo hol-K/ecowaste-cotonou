@@ -6,13 +6,15 @@ Ce répertoire contient les tests unitaires, de widget et d'intégration pour l'
 
 ```
 test/
-├── widget_test.dart          # Tests de base Material App
+├── helpers/
+│   └── fakes.dart                        # Repositories en mémoire (sans Supabase)
 ├── unit/
-│   └── example_test.dart     # Tests unitaires (logique métier)
-├── widget/
-│   └── material_widgets_test.dart  # Tests des widgets Flutter
-└── integration/
-    └── user_flow_test.dart   # Tests d'intégration (flux utilisateur)
+│   ├── recycling_guide_item_test.dart    # Conversion du guide (enums Postgres)
+│   ├── supabase_models_test.dart         # Conversion plannings / points / profils
+│   ├── notification_reminders_test.dart  # Calcul des rappels de collecte
+│   └── providers_test.dart               # Guide, calendrier, carte
+└── widget/
+    └── guide_screen_test.dart            # Écran du guide : filtres, recherche, fiche
 ```
 
 ## Exécution des tests
@@ -32,14 +34,9 @@ flutter test test/unit
 flutter test test/widget
 ```
 
-### Tests d'intégration uniquement
-```bash
-flutter test test/integration
-```
-
 ### Test spécifique
 ```bash
-flutter test test/unit/example_test.dart
+flutter test test/unit/providers_test.dart
 ```
 
 ### Avec couverture de code
@@ -97,22 +94,26 @@ testWidgets('Full app flow', (WidgetTester tester) async {
 1. **Nommage** : Utilisez des noms descriptifs pour les tests
 2. **AAA Pattern** : Arrange, Act, Assert
 3. **Isolation** : Chaque test doit être indépendant
-4. **Mocking** : Mock les services externes (Firebase, API)
+4. **Mocking** : Mock les services externes (Supabase, API)
 5. **Couverture** : Viser 80%+ de couverture de code
 
-## Mocking Firebase (pour les tests)
+## Tester sans Supabase
 
-Pour les tests avec Firebase, utilisez `mockito` ou `fake_cloud_firestore`:
+Les modèles se testent directement avec des lignes au format renvoyé par
+Supabase (voir `unit/supabase_models_test.dart`).
+
+Les repositories acceptent un `SupabaseClient` dans leur constructeur, et
+`AuthProvider` accepte un `UserRepository` : dans un test, passez un client
+pointé vers un faux serveur HTTP, ou une sous-classe de repository qui
+renvoie des données en mémoire.
 
 ```dart
-import 'package:mockito/mockito.dart';
+class FakeGuideRepository extends GuideRepository {
+  FakeGuideRepository() : super(client: SupabaseClient('http://localhost', 'test'));
 
-class MockFirebaseAuth extends Mock implements FirebaseAuth {}
-
-setUp(() {
-  final mockAuth = MockFirebaseAuth();
-  // Configurer les mocks...
-});
+  @override
+  Stream<List<RecyclingGuideItem>> getAllItems() => Stream.value([/* ... */]);
+}
 ```
 
 ## Ressources

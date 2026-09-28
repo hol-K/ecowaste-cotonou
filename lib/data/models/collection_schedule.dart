@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'waste_type.dart';
 
 /// Représente un événement de collecte de déchets
@@ -75,46 +75,38 @@ class CollectionSchedule {
 
   /// Formatte la date en français (ex: "Lundi 22 janvier")
   String getFormattedDate() {
-    final weekdays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
-    final months = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 
-                    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-    
-    final weekday = weekdays[collectionDate.weekday - 1];
-    final day = collectionDate.day;
-    final month = months[collectionDate.month - 1];
-    
-    return '$weekday $day $month';
+    final text = DateFormat('EEEE d MMMM', 'fr_FR').format(collectionDate);
+    return text[0].toUpperCase() + text.substring(1);
   }
 
-  //SÉRIALISATION FIRESTORE
+  //SÉRIALISATION SUPABASE
 
-  /// Conversion depuis Map from Firestore
-  factory CollectionSchedule.fromMap(Map<String, dynamic> map, String id) {
+  /// Conversion depuis une ligne Supabase (table collection_schedules)
+  factory CollectionSchedule.fromMap(Map<String, dynamic> map) {
     return CollectionSchedule(
-      id: id,
+      id: map['id'] as String,
       district: map['district'] ?? '',
-      wasteType: WasteType.values.firstWhere(
-        (e) => e.toString() == 'WasteType.${map['wasteType']}',
-        orElse: () => WasteType.general,
-      ),
-      collectionDate: (map['collectionDate'] as Timestamp).toDate(),
-      collectionTime: map['collectionTime'] ?? '',
+      wasteType: WasteType.values.asNameMap()[map['waste_type']] ??
+          WasteType.general,
+      // Colonne `date` : "2026-09-28" → minuit heure locale
+      collectionDate: DateTime.parse(map['collection_date'] as String),
+      collectionTime: map['collection_time'] ?? '',
       instructions: map['instructions'] ?? '',
-      isRecurring: map['isRecurring'] ?? false,
-      recurrencePattern: map['recurrencePattern'],
+      isRecurring: map['is_recurring'] ?? false,
+      recurrencePattern: map['recurrence_pattern'],
     );
   }
 
-  /// Conversion vers Map for Firestore
+  /// Conversion vers une ligne Supabase
   Map<String, dynamic> toMap() {
     return {
       'district': district,
-      'wasteType': wasteType.toString().split('.').last,
-      'collectionDate': Timestamp.fromDate(collectionDate),
-      'collectionTime': collectionTime,
+      'waste_type': wasteType.name,
+      'collection_date': collectionDate.toIso8601String().substring(0, 10),
+      'collection_time': collectionTime,
       'instructions': instructions,
-      'isRecurring': isRecurring,
-      'recurrencePattern': recurrencePattern,
+      'is_recurring': isRecurring,
+      'recurrence_pattern': recurrencePattern,
     };
   }
 

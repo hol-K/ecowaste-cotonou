@@ -1,5 +1,4 @@
 import 'dart:math' show sin, cos, sqrt, asin;
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'waste_type.dart';
 
 /// Représente un point de collecte géolocalisé
@@ -103,48 +102,48 @@ class CollectionPoint {
     return '${rating!.toStringAsFixed(1)} / 5';
   }
 
-  //SÉRIALISATION FIRESTORE 
+  //SÉRIALISATION SUPABASE (table collection_points)
 
-  /// Conversion depuis Map (Firestore → Dart)
-  factory CollectionPoint.fromMap(Map<String, dynamic> map, String id) {
-    // Gestion de GeoPoint Firestore
-    final GeoPoint? geoPoint = map['location'];
-    
+  /// Conversion depuis une ligne Supabase
+  factory CollectionPoint.fromMap(Map<String, dynamic> map) {
+    final types = WasteType.values.asNameMap();
     return CollectionPoint(
-      id: id,
+      id: map['id'] as String,
       name: map['name'] ?? '',
-      latitude: geoPoint?.latitude ?? 0.0,
-      longitude: geoPoint?.longitude ?? 0.0,
+      latitude: (map['latitude'] as num).toDouble(),
+      longitude: (map['longitude'] as num).toDouble(),
       address: map['address'] ?? '',
-      acceptedWasteTypes: (map['acceptedWasteTypes'] as List<dynamic>?)
-          ?.map((e) => WasteType.values.firstWhere(
-                (type) => type.toString() == 'WasteType.$e',
-                orElse: () => WasteType.general,
-              ))
-          .toList() ?? [],
-      openingHours: map['openingHours'] ?? '',
+      acceptedWasteTypes: [
+        for (final name in (map['accepted_waste_types'] as List? ?? const []))
+          if (types[name] != null) types[name]!,
+      ],
+      openingHours: map['opening_hours'] ?? '',
       phone: map['phone'],
-      imageUrl: map['imageUrl'],
+      imageUrl: map['image_url'],
       description: map['description'],
-      isPublic: map['isPublic'] ?? true,
-      rating: map['rating']?.toDouble(),
+      isPublic: map['is_public'] ?? true,
+      // numeric Postgres : peut arriver en num ou en String selon le client
+      rating: switch (map['rating']) {
+        num value => value.toDouble(),
+        String value => double.tryParse(value),
+        _ => null,
+      },
     );
   }
 
-  /// Conversion vers Map (Dart → Firestore)
+  /// Conversion vers une ligne Supabase
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'location': GeoPoint(latitude, longitude),
+      'latitude': latitude,
+      'longitude': longitude,
       'address': address,
-      'acceptedWasteTypes': acceptedWasteTypes
-          .map((e) => e.toString().split('.').last)
-          .toList(),
-      'openingHours': openingHours,
+      'accepted_waste_types': acceptedWasteTypes.map((e) => e.name).toList(),
+      'opening_hours': openingHours,
       'phone': phone,
-      'imageUrl': imageUrl,
+      'image_url': imageUrl,
       'description': description,
-      'isPublic': isPublic,
+      'is_public': isPublic,
       'rating': rating,
     };
   }

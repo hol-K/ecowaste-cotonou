@@ -8,7 +8,7 @@
 PRODUCT_NAME = ecowaste_cotonou
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.example.ecowasteCotonou
+PRODUCT_BUNDLE_IDENTIFIER = bj.ecowaste.cotonou
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 com.example. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2026 EcoWaste Cotonou. All rights reserved.

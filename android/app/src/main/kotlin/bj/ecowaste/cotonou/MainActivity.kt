@@ -1,4 +1,4 @@
-package com.example.ecowaste_cotonou
+package bj.ecowaste.cotonou
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Modèle représentant une catégorie de déchets recyclables
 class WasteCategory {
@@ -24,11 +23,10 @@ class WasteCategory {
     this.sortOrder = 0,
   });
 
-  /// Convertir depuis Firestore
-  factory WasteCategory.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
+  /// Convertir depuis une ligne de base de données
+  factory WasteCategory.fromMap(Map<String, dynamic> data) {
     return WasteCategory(
-      id: doc.id,
+      id: data['id'] as String,
       name: data['name'] ?? '',
       description: data['description'] ?? '',
       iconName: data['iconName'] ?? 'recycling',
@@ -40,8 +38,8 @@ class WasteCategory {
     );
   }
 
-  /// Convertir vers Firestore
-  Map<String, dynamic> toFirestore() {
+  /// Convertir vers une ligne de base de données
+  Map<String, dynamic> toMap() {
     return {
       'name': name,
       'description': description,

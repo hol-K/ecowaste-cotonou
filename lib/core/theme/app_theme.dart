@@ -259,22 +259,19 @@ class AppTheme {
       ),
       
       // Inputs / TextFields
+      // Style commun à tous les formulaires (connexion, inscription, profil…)
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0x0DFFFFFF), // rgba(255,255,255,0.05)
+        fillColor: const Color(0x1AFFFFFF), // rgba(255,255,255,0.1)
+        prefixIconColor: accent,
+        suffixIconColor: textSecondary,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0x1AFFFFFF), // rgba(255,255,255,0.1)
-            width: 1,
-          ),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0x1AFFFFFF),
-            width: 1,
-          ),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -290,10 +287,7 @@ class AppTheme {
             width: 2,
           ),
         ),
-        labelStyle: const TextStyle(
-          fontSize: 14,
-          color: textSecondary,
-        ),
+        labelStyle: const TextStyle(color: textSecondary),
         hintStyle: const TextStyle(
           fontSize: 14,
           color: textSecondary,
@@ -405,7 +399,7 @@ class AppTheme {
   
   /// Obtient une couleur avec opacité
   static Color withOpacity(Color color, double opacity) {
-    return color.withOpacity(opacity);
+    return color.withValues(alpha: opacity);
   }
   
   /// Obtient la couleur d'un type de déchet

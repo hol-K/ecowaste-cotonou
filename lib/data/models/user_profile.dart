@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/utils/validators.dart';
 import 'user_statistics.dart';
 import 'notification_settings.dart';
 
 /// Représente le profil complet d'un utilisateur
 class UserProfile {
-  final String id;                    // ID utilisateur (Firebase Auth UID)
+  final String id;                    // ID utilisateur (Supabase Auth)
   final String? name;                 // Nom complet (optionnel)
   final String? email;                // Email
   final String? phone;                // Téléphone (optionnel)
@@ -137,11 +137,7 @@ class UserProfile {
       ];
 
   /// Valide le format de l'email
-  bool get hasValidEmail {
-    if (email == null) return false;
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    return emailRegex.hasMatch(email!);
-  }
+  bool get hasValidEmail => email != null && Validators.isValidEmail(email!);
 
   /// Valide le format du téléphone (Bénin)
   bool get hasValidPhone {
@@ -162,40 +158,41 @@ class UserProfile {
     return phone;
   }
 
-  //SÉRIALISATION FIRESTORE
+  //SÉRIALISATION SUPABASE (table profiles)
 
-  /// Conversion depuis Map (Firestore → Dart)
-  factory UserProfile.fromMap(Map<String, dynamic> map, String id) {
+  /// Conversion depuis une ligne Supabase
+  factory UserProfile.fromMap(Map<String, dynamic> map) {
+    final createdAt =
+        DateTime.tryParse(map['created_at'] ?? '')?.toLocal() ?? DateTime.now();
     return UserProfile(
-      id: id,
+      id: map['id'] as String,
       name: map['name'],
       email: map['email'],
       phone: map['phone'],
-      photoUrl: map['photoUrl'],
+      photoUrl: map['photo_url'],
       district: map['district'] ?? 'Akpakpa',
-      createdAt: (map['createdAt'] as Timestamp).toDate(),
-      updatedAt: map['updatedAt'] != null
-          ? (map['updatedAt'] as Timestamp).toDate()
-          : (map['createdAt'] as Timestamp).toDate(),
-      statistics: UserStatistics.fromMap(map['statistics'] ?? {}),
+      createdAt: createdAt,
+      updatedAt:
+          DateTime.tryParse(map['updated_at'] ?? '')?.toLocal() ?? createdAt,
+      statistics: UserStatistics.fromMap(
+        Map<String, dynamic>.from(map['statistics'] ?? const {}),
+      ),
       notificationSettings: NotificationSettings.fromMap(
-        map['notificationSettings'] ?? {}
+        Map<String, dynamic>.from(map['notification_settings'] ?? const {}),
       ),
     );
   }
 
-  /// Conversion vers Map (Dart → Firestore)
+  /// Champs modifiables par l'utilisateur. `id`, `email` et les dates sont
+  /// gérés par la base (trigger d'inscription et `updated_at` automatique).
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'email': email,
       'phone': phone,
-      'photoUrl': photoUrl,
+      'photo_url': photoUrl,
       'district': district,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': Timestamp.fromDate(updatedAt),
       'statistics': statistics.toMap(),
-      'notificationSettings': notificationSettings.toMap(),
+      'notification_settings': notificationSettings.toMap(),
     };
   }
 

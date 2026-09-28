@@ -1,22 +1,11 @@
-import 'package:ecowaste_cotonou/data/models/guide_item.dart';
-import 'package:flutter/material.dart';
-
 import 'waste_type.dart';
 
 /// Représente un item du guide de recyclage
-class RecyclingGuideItem extends GuideItem {
+class RecyclingGuideItem {
   final String id;
   final String name; // Nom du déchet (ex: "Bouteille en plastique")
-  final RecyclingCategory _category; // Catégorie
-  final WasteType _wasteType; // Type de poubelle correspondante
-
-  @override
-  String get category => _category.displayName;
-  RecyclingCategory get recyclingCategory => _category;
-  @override
-  String get wasteType => _wasteType.displayName;
-  WasteType get actualWasteType => _wasteType;
-  
+  final RecyclingCategory category; // Catégorie
+  final WasteType wasteType; // Type de poubelle correspondante
   final String imageUrl; // URL de l'image
   final String description; // Description détaillée
   final List<String> instructions; // Instructions de préparation (étapes)
@@ -27,23 +16,15 @@ class RecyclingGuideItem extends GuideItem {
   RecyclingGuideItem({
     required this.id,
     required this.name,
-    required RecyclingCategory category,
-    required WasteType wasteType,
+    required this.category,
+    required this.wasteType,
     required this.imageUrl,
     required this.description,
     required this.instructions,
     required this.environmentalImpact,
     required this.keywords,
     this.alternatives,
-  }) : _category = category,
-       _wasteType = wasteType,
-       super(
-         name: name,
-         category: category.displayName,
-         wasteType: wasteType.toString(),
-         color: const Color(0xFF000000),
-         icon: Icons.recycling,
-       );
+  });
 
   //MÉTHODES UTILES
 
@@ -65,15 +46,13 @@ class RecyclingGuideItem extends GuideItem {
     }
 
     // Recherche dans la catégorie
-    if (_category.displayName.toLowerCase().contains(lowerQuery)) return true;
+    if (category.displayName.toLowerCase().contains(lowerQuery)) return true;
 
     return false;
   }
 
   /// Vérifie si l'item appartient à une catégorie spécifique
-  bool belongsToCategory(RecyclingCategory cat) {
-    return category == cat;
-  }
+  bool belongsToCategory(RecyclingCategory cat) => category == cat;
 
   /// Obtient un résumé court pour l'affichage en liste
   String getShortDescription() {
@@ -87,42 +66,39 @@ class RecyclingGuideItem extends GuideItem {
   /// Vérifie si des alternatives écologiques sont disponibles
   bool get hasAlternatives => alternatives != null && alternatives!.isNotEmpty;
 
-  //SÉRIALISATION FIRESTORE
+  //SÉRIALISATION SUPABASE (table recycling_guide_items)
 
-  /// Conversion depuis Map (Firestore → Dart)
-  factory RecyclingGuideItem.fromMap(Map<String, dynamic> map, String id) {
+  /// Conversion depuis une ligne Supabase. Les colonnes category et
+  /// waste_type sont des enums Postgres aux mêmes valeurs que les enums Dart.
+  factory RecyclingGuideItem.fromMap(Map<String, dynamic> map) {
     return RecyclingGuideItem(
-      id: id,
+      id: map['id'] as String,
       name: map['name'] ?? '',
-      category: RecyclingCategory.values.firstWhere(
-        (e) => e.toString() == 'RecyclingCategory.${map['category']}',
-        orElse: () => RecyclingCategory.plastic,
-      ),
-      wasteType: WasteType.values.firstWhere(
-        (e) => e.toString() == 'WasteType.${map['wasteType']}',
-        orElse: () => WasteType.general,
-      ),
-      imageUrl: map['imageUrl'] ?? '',
+      category: RecyclingCategory.values.asNameMap()[map['category']] ??
+          RecyclingCategory.plastic,
+      wasteType: WasteType.values.asNameMap()[map['waste_type']] ??
+          WasteType.general,
+      imageUrl: map['image_url'] ?? '',
       description: map['description'] ?? '',
-      instructions: List<String>.from(map['instructions'] ?? []),
-      environmentalImpact: map['environmentalImpact'] ?? '',
-      keywords: List<String>.from(map['keywords'] ?? []),
+      instructions: List<String>.from(map['instructions'] ?? const []),
+      environmentalImpact: map['environmental_impact'] ?? '',
+      keywords: List<String>.from(map['keywords'] ?? const []),
       alternatives: map['alternatives'] != null
           ? List<String>.from(map['alternatives'])
           : null,
     );
   }
 
-  /// Conversion vers Map (Dart → Firestore)
+  /// Conversion vers une ligne Supabase
   Map<String, dynamic> toMap() {
     return {
       'name': name,
-      'category': category.toString().split('.').last,
-      'wasteType': wasteType.toString().split('.').last,
-      'imageUrl': imageUrl,
+      'category': category.name,
+      'waste_type': wasteType.name,
+      'image_url': imageUrl,
       'description': description,
       'instructions': instructions,
-      'environmentalImpact': environmentalImpact,
+      'environmental_impact': environmentalImpact,
       'keywords': keywords,
       'alternatives': alternatives,
     };
@@ -144,8 +120,8 @@ class RecyclingGuideItem extends GuideItem {
     return RecyclingGuideItem(
       id: id ?? this.id,
       name: name ?? this.name,
-      category: category ?? _category,
-      wasteType: wasteType ?? _wasteType,
+      category: category ?? this.category,
+      wasteType: wasteType ?? this.wasteType,
       imageUrl: imageUrl ?? this.imageUrl,
       description: description ?? this.description,
       instructions: instructions ?? this.instructions,
@@ -157,7 +133,7 @@ class RecyclingGuideItem extends GuideItem {
 
   @override
   String toString() {
-    return 'RecyclingGuideItem(id: $id, name: $name, category: ${_category.displayName})';
+    return 'RecyclingGuideItem(id: $id, name: $name, category: ${category.displayName})';
   }
 
   @override

@@ -1,118 +1,46 @@
 // lib/data/repositories/user_repository.dart
 
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_profile.dart';
 
-/// Repository pour gérer les profils utilisateurs
+/// Repository des profils utilisateurs (table `profiles`).
+///
+/// Le profil est créé par la base à l'inscription (trigger
+/// `on_auth_user_created`) ; la RLS limite chaque utilisateur à sa ligne.
+/// Les erreurs remontent à l'appelant, qui décide quoi afficher.
 class UserRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _collection = 'users';
+  UserRepository({SupabaseClient? client})
+    : _client = client ?? Supabase.instance.client;
 
-  // ========== LECTURE (READ) ==========
+  final SupabaseClient _client;
+  static const String _table = 'profiles';
 
-  /// Récupère le profil d'un utilisateur par ID
+  /// Récupère le profil d'un utilisateur (null s'il n'existe pas)
   Future<UserProfile?> getUserProfile(String userId) async {
-    try {
-      final doc = await _firestore.collection(_collection).doc(userId).get();
-      if (doc.exists) {
-        return UserProfile.fromMap(doc.data()!, doc.id);
-      }
-      return null;
-    } catch (e) {
-      print('Erreur lors de la récupération du profil: $e');
-      return null;
-    }
+    final row = await _client
+        .from(_table)
+        .select()
+        .eq('id', userId)
+        .maybeSingle();
+    return row == null ? null : UserProfile.fromMap(row);
   }
 
-  /// Écoute les changements du profil utilisateur en temps réel
+  /// Écoute le profil en temps réel
   Stream<UserProfile?> getUserProfileStream(String userId) {
-    return _firestore.collection(_collection).doc(userId).snapshots().map((
-      doc,
-    ) {
-      if (doc.exists) {
-        return UserProfile.fromMap(doc.data()!, doc.id);
-      }
-      return null;
-    });
+    return _client
+        .from(_table)
+        .stream(primaryKey: ['id'])
+        .eq('id', userId)
+        .map((rows) => rows.isEmpty ? null : UserProfile.fromMap(rows.first));
   }
 
-  // ========== CRÉATION (CREATE) ==========
-
-  /// Crée un nouveau profil utilisateur
-  Future<bool> createUserProfile(UserProfile profile) async {
-    try {
-      await _firestore
-          .collection(_collection)
-          .doc(profile.id)
-          .set(profile.toMap());
-      return true;
-    } catch (e) {
-      print('Erreur lors de la création du profil: $e');
-      return false;
-    }
+  /// Met à jour les champs modifiables du profil
+  Future<void> updateUserProfile(UserProfile profile) {
+    return _client.from(_table).update(profile.toMap()).eq('id', profile.id);
   }
 
-  // ========== MISE À JOUR (UPDATE) ==========
-
-  /// Met à jour le profil utilisateur complet
-  Future<bool> updateUserProfile(UserProfile profile) async {
-    try {
-      await _firestore
-          .collection(_collection)
-          .doc(profile.id)
-          .update(profile.toMap());
-      return true;
-    } catch (e) {
-      print('Erreur lors de la mise à jour du profil: $e');
-      return false;
-    }
-  }
-
-  /// Met à jour des champs spécifiques
-  Future<bool> updateFields(String userId, Map<String, dynamic> fields) async {
-    try {
-      await _firestore.collection(_collection).doc(userId).update(fields);
-      return true;
-    } catch (e) {
-      print('Erreur lors de la mise à jour des champs: $e');
-      return false;
-    }
-  }
-
-  // ========== SUPPRESSION (DELETE) ==========
-
-  /// Supprime un profil utilisateur
-  Future<bool> deleteUserProfile(String userId) async {
-    try {
-      await _firestore.collection(_collection).doc(userId).delete();
-      return true;
-    } catch (e) {
-      print('Erreur lors de la suppression du profil: $e');
-      return false;
-    }
-  }
-
-  // ========== MÉTHODES UTILITAIRES ==========
-
-  /// Vérifie si un profil existe
-  Future<bool> userProfileExists(String userId) async {
-    try {
-      final doc = await _firestore.collection(_collection).doc(userId).get();
-      return doc.exists;
-    } catch (e) {
-      print('Erreur lors de la vérification: $e');
-      return false;
-    }
-  }
-
-  /// Compte le nombre total d'utilisateurs
-  Future<int> getUsersCount() async {
-    try {
-      final snapshot = await _firestore.collection(_collection).get();
-      return snapshot.size;
-    } catch (e) {
-      print('Erreur lors du comptage: $e');
-      return 0;
-    }
+  /// Supprime le compte de l'utilisateur connecté (profil supprimé en cascade)
+  Future<void> deleteOwnAccount() {
+    return _client.rpc('delete_own_account');
   }
 }

@@ -1,5 +1,8 @@
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show User;
+import '../../../data/models/user_profile.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import 'edit_profile_screen.dart';
@@ -12,10 +15,10 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF1A3329),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text('Mon Profil'),
-        backgroundColor: const Color(0xFF2D5F4F),
+        backgroundColor: AppColors.primary,
         elevation: 0,
         actions: [
           IconButton(
@@ -65,11 +68,15 @@ class ProfileScreen extends StatelessWidget {
   }
 
   /// Header du profil
-  Widget _buildProfileHeader(context, user, profile) {
+  Widget _buildProfileHeader(
+    BuildContext context,
+    User user,
+    UserProfile? profile,
+  ) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(color: Color(0xFF2D5F4F)),
+      decoration: const BoxDecoration(color: AppColors.primary),
       child: Column(
         children: [
           // Avatar
@@ -77,7 +84,7 @@ class ProfileScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 50,
-                backgroundColor: const Color(0xFF4A9B7F),
+                backgroundColor: AppColors.accent,
                 child: profile?.photoUrl != null
                     ? ClipOval(
                         child: Image.network(
@@ -102,7 +109,7 @@ class ProfileScreen extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(
-                    color: Color(0xFF66BB6A),
+                    color: AppColors.success,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.check, size: 16, color: Colors.white),
@@ -115,7 +122,9 @@ class ProfileScreen extends StatelessWidget {
 
           // Nom
           Text(
-            profile?.name ?? user.displayName ?? 'Utilisateur',
+            profile?.name ??
+                user.userMetadata?['name'] as String? ??
+                'Utilisateur',
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -128,7 +137,7 @@ class ProfileScreen extends StatelessWidget {
           // Email
           Text(
             profile?.email ?? user.email ?? '',
-            style: const TextStyle(fontSize: 14, color: Color(0xFFB8C5C0)),
+            style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
           ),
 
           const SizedBox(height: 8),
@@ -138,7 +147,7 @@ class ProfileScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF4A9B7F).withOpacity(0.3),
+                color: AppColors.accent.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -147,7 +156,7 @@ class ProfileScreen extends StatelessWidget {
                   const Icon(
                     Icons.location_on,
                     size: 16,
-                    color: Color(0xFF4A9B7F),
+                    color: AppColors.accent,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -167,16 +176,16 @@ class ProfileScreen extends StatelessWidget {
   }
 
   /// Statistiques utilisateur
-  Widget _buildStatistics(profile) {
+  Widget _buildStatistics(UserProfile profile) {
     final stats = profile.statistics;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0x14FFFFFF),
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
+        border: Border.all(color: AppColors.outline, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,7 +216,7 @@ class ProfileScreen extends StatelessWidget {
                 child: _buildStatCard(
                   '${stats.calendarViews}',
                   'consultations',
-                  const Color(0xFF42A5F5),
+                  AppColors.info,
                 ),
               ),
             ],
@@ -221,7 +230,7 @@ class ProfileScreen extends StatelessWidget {
                 child: _buildStatCard(
                   '${stats.totalWasteRecycled.toStringAsFixed(1)} kg',
                   'recyclés',
-                  const Color(0xFF66BB6A),
+                  AppColors.success,
                 ),
               ),
               const SizedBox(width: 12),
@@ -229,7 +238,7 @@ class ProfileScreen extends StatelessWidget {
                 child: _buildStatCard(
                   '${stats.co2Avoided.toStringAsFixed(1)} kg',
                   'CO₂ évités',
-                  const Color(0xFF4A9B7F),
+                  AppColors.accent,
                 ),
               ),
             ],
@@ -241,14 +250,14 @@ class ProfileScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF4A9B7F).withOpacity(0.2),
+              color: AppColors.accent.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
                 const Icon(
                   Icons.emoji_events,
-                  color: Color(0xFF4A9B7F),
+                  color: AppColors.accent,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -271,9 +280,9 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3), width: 1),
+        border: Border.all(color: color.withValues(alpha: 0.3), width: 1),
       ),
       child: Column(
         children: [
@@ -288,7 +297,7 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFFB8C5C0)),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],
@@ -301,9 +310,9 @@ class ProfileScreen extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0x14FFFFFF),
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0x1AFFFFFF), width: 1),
+        border: Border.all(color: AppColors.outline, width: 1),
       ),
       child: Column(
         children: [
@@ -376,7 +385,7 @@ class ProfileScreen extends StatelessWidget {
             icon: Icons.logout,
             title: 'Se déconnecter',
             subtitle: '',
-            color: const Color(0xFFEF5350),
+            color: AppColors.error,
             onTap: () {
               _showLogoutDialog(context, authProvider);
             },
@@ -396,7 +405,7 @@ class ProfileScreen extends StatelessWidget {
   }) {
     return ListTile(
       onTap: onTap,
-      leading: Icon(icon, color: color ?? const Color(0xFF4A9B7F), size: 24),
+      leading: Icon(icon, color: color ?? AppColors.accent, size: 24),
       title: Text(
         title,
         style: TextStyle(
@@ -408,12 +417,12 @@ class ProfileScreen extends StatelessWidget {
       subtitle: subtitle.isNotEmpty
           ? Text(
               subtitle,
-              style: const TextStyle(fontSize: 13, color: Color(0xFFB8C5C0)),
+              style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
             )
           : null,
       trailing: Icon(
         Icons.chevron_right,
-        color: color ?? const Color(0xFFB8C5C0),
+        color: color ?? AppColors.textSecondary,
       ),
     );
   }
@@ -421,7 +430,7 @@ class ProfileScreen extends StatelessWidget {
   /// Divider
   Widget _buildDivider() {
     return const Divider(
-      color: Color(0x1AFFFFFF),
+      color: AppColors.outline,
       height: 1,
       thickness: 1,
       indent: 16,
@@ -440,13 +449,13 @@ class ProfileScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF4A9B7F).withOpacity(0.2),
+                color: AppColors.accent.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.person_outline,
                 size: 80,
-                color: Color(0xFF4A9B7F),
+                color: AppColors.accent,
               ),
             ),
 
@@ -467,7 +476,7 @@ class ProfileScreen extends StatelessWidget {
               'Connectez-vous pour suivre vos statistiques et personnaliser votre expérience',
               style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFFB8C5C0),
+                color: AppColors.textSecondary,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -488,7 +497,7 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF4A9B7F),
+                  backgroundColor: AppColors.accent,
                 ),
                 child: const Text(
                   'Se connecter',
@@ -507,32 +516,31 @@ class ProfileScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF234037),
+        backgroundColor: AppColors.surface,
         title: const Text('Déconnexion', style: TextStyle(color: Colors.white)),
         content: const Text(
           'Êtes-vous sûr de vouloir vous déconnecter ?',
-          style: TextStyle(color: Color(0xFFB8C5C0)),
+          style: TextStyle(color: AppColors.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Annuler',
-              style: TextStyle(color: Color(0xFFB8C5C0)),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ),
           ElevatedButton(
             onPressed: () async {
+              final navigator = Navigator.of(context);
               await authProvider.signOut();
-              if (context.mounted) {
-                Navigator.of(context).pop(); // Ferme dialog
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (context) => const LoginScreen()),
-                );
-              }
+              navigator.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF5350),
+              backgroundColor: AppColors.error,
             ),
             child: const Text('Déconnexion'),
           ),
@@ -546,18 +554,18 @@ class ProfileScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF234037),
+        backgroundColor: AppColors.surface,
         title: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: const Color(0xFF4A9B7F).withOpacity(0.2),
+                color: AppColors.accent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 Icons.recycling_rounded,
-                color: Color(0xFF4A9B7F),
+                color: AppColors.accent,
                 size: 24,
               ),
             ),
@@ -575,19 +583,19 @@ class ProfileScreen extends StatelessWidget {
             Text(
               'Version 1.0.0',
               style: TextStyle(
-                color: Color(0xFF4A9B7F),
+                color: AppColors.accent,
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 16),
             Text(
               'Application de gestion intelligente des déchets pour la ville de Cotonou.',
-              style: TextStyle(color: Color(0xFFB8C5C0)),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
             SizedBox(height: 16),
             Text(
               'Développé par Cedric Honorat OLOUKOU pour préserver notre environnement.',
-              style: TextStyle(color: Color(0xFFB8C5C0)),
+              style: TextStyle(color: AppColors.textSecondary),
             ),
           ],
         ),
@@ -596,7 +604,7 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
             child: const Text(
               'Fermer',
-              style: TextStyle(color: Color(0xFF4A9B7F)),
+              style: TextStyle(color: AppColors.accent),
             ),
           ),
         ],

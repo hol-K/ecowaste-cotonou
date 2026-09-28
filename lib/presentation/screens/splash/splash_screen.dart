@@ -1,13 +1,12 @@
 // lib/presentation/screens/splash/splash_screen.dart
 
+import 'package:ecowaste_cotonou/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../home/home_screen.dart';
 import '../auth/login_screen.dart';
-import '../../../data/services/auth_service.dart';
-import 'package:ecowaste_cotonou/data/repositories/user_repository.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 /// Écran de démarrage (Splash Screen)
 /// Affiché pendant 3 secondes au lancement de l'app
 class SplashScreen extends StatefulWidget {
@@ -59,12 +58,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     
     if (!mounted) return;
     
-    // Vérifier si l'utilisateur est connecté
-    final authService = AuthService(
-    FirebaseAuth.instance, 
-    UserRepository(), // Assurez-vous d'importer UserRepository
-);
-    final isAuthenticated = authService.isAuthenticated;
+    // Vérifier si l'utilisateur est connecté (session restaurée par Supabase)
+    final isAuthenticated = Supabase.instance.client.auth.currentUser != null;
     
     Widget nextScreen;
     
@@ -99,8 +94,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF1A3329), // background
-              Color(0xFF2D5F4F), // primary
+              AppColors.background, // background
+              AppColors.primary, // primary
             ],
           ),
         ),
@@ -117,13 +112,13 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     width: 120,
                     height: 120,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF4A9B7F).withOpacity(0.2),
+                      color: AppColors.accent.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
                       Icons.recycling_rounded,
                       size: 80,
-                      color: Color(0xFF4A9B7F), // accent
+                      color: AppColors.accent, // accent
                     ),
                   ),
                   
@@ -147,7 +142,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w300,
-                      color: Color(0xFF4A9B7F),
+                      color: AppColors.accent,
                       letterSpacing: 4,
                     ),
                   ),
@@ -159,7 +154,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     'Triez intelligent, préservez Cotonou',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w300,
                     ),
                     textAlign: TextAlign.center,
@@ -174,7 +169,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF4A9B7F),
+                        AppColors.accent,
                       ),
                     ),
                   ),
@@ -185,7 +180,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                     'Chargement...',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFFB8C5C0),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

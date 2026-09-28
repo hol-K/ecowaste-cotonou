@@ -45,5 +45,19 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Votre position sert à trouver les points de collecte les plus proches.</string>
+	<!-- Lien profond Supabase : confirmation d'email / mot de passe oublié -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>io.supabase.ecowaste</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
