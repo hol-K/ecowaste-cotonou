@@ -1,11 +1,11 @@
 // lib/presentation/screens/auth/signup_screen.dart
 
-import 'package:ecowaste_cotonou/presentation/screens/auth/auth_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../home/home_screen.dart';
 import '../../../core/constants/app_strings.dart';
+import 'login_screen.dart';
 
 /// Écran d'inscription
 class SignUpScreen extends StatefulWidget {
